@@ -1,0 +1,11 @@
+name: pickle_compression
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python>=3.8
+  - pre-commit
+  - pandas
+  - scikit-learn
+  - pytest>=6
+  - setuptools_scm
