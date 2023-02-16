@@ -5,7 +5,7 @@ import lzma
 import pathlib
 import pickle
 from collections.abc import Callable
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Tuple, Dict
 
 
 class _NoCompression:
@@ -34,15 +34,15 @@ def _get_compression_library(compression_method: str) -> Any:
     return compression_library[compression_method]
 
 
-def _get_default_kwargs(compression_method: str) -> dict[str, Any]:
+def _get_default_kwargs(compression_method: str) -> Dict[str, Any]:
     defaults = {'gzip': {'compresslevel': 1}}
     return defaults.get(compression_method, {})
 
 
 def _unpack_compression_args(
-    compression: Optional[Union[str, dict]] = None,
+    compression: Optional[Union[str, Dict[str, Any]]] = None,
     path: Optional[Union[str, pathlib.Path]] = None
-) -> tuple[str, dict]:
+) -> Tuple[str, dict]:
     if compression is not None:
         if isinstance(compression, str):
             return compression, _get_default_kwargs(compression)

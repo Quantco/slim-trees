@@ -7,9 +7,9 @@ from sklearn.ensemble.tests.test_bagging import diabetes
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import check_random_state
 
-from compress_model import dump_compressed_dtype_reduction, compress_half_int_float_array, \
+from pickle_compression.compress_model import dump_compressed_dtype_reduction, compress_half_int_float_array, \
     decompress_half_int_float_array, _is_in_neighborhood_of_int
-from pickling import load_compressed, dump_compressed
+from pickle_compression.pickling import load_compressed, dump_compressed
 
 
 @pytest.fixture

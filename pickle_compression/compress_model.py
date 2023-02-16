@@ -11,12 +11,12 @@ You can pickle a model with custom picklers by specifying dump_function in dump_
 import copyreg
 import pathlib
 import pickle
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, Union
 
 import numpy as np
 from sklearn.tree._tree import Tree
 
-from pickling import dump_compressed
+from pickle_compression.pickling import dump_compressed
 
 
 def dump_dtype_reduction(model: Any, file: BinaryIO):
@@ -27,7 +27,7 @@ def dump_dtype_reduction(model: Any, file: BinaryIO):
 
 
 def dump_compressed_dtype_reduction(
-    model: Any, path: str | pathlib.Path, compression: str | dict = 'lzma'
+    model: Any, path: Union[str, pathlib.Path], compression: Union[str, dict] = 'lzma'
 ):
     """
     Pickles a model and saves a compressed version to the disk.
