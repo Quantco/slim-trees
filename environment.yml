@@ -3,9 +3,10 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
+  - numpy
   - python>=3.8
   - pre-commit
   - pandas
   - scikit-learn
-  - pytest>=6
+  - pytest
   - setuptools_scm
