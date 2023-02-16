@@ -6,16 +6,18 @@ from lightgbm import LGBMClassifier
 
 _target_type = LGBMClassifier
 
+
 def dump_function(model: _target_type, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
     p.dispatch_table[_target_type] = _compressed_lgbm_pickle
     p.dump(model)
 
+
 def _compressed_lgbm_pickle(lgbm_classifier: _target_type):
     assert isinstance(lgbm_classifier, _target_type)
 
-    # retrieve 
+    # retrieve
     cls, init_args, _ = lgbm_classifier.booster_.__reduce__()
 
     # extract state information
@@ -40,15 +42,18 @@ def _compressed_lgbm_pickle(lgbm_classifier: _target_type):
     # return function to unpickle again
     return _compressed_lgbm_unpickle, (cls, init_args, compressed_state)
 
+
 def _compress_lgbm_state(state):
     """
     For a given state dictionary, store data in a structured format that can then
     be saved to disk in a way that can be compressed.
     """
-    return state # TODO: actually do something
+    return state  # TODO: actually do something
+
 
 def _decompress_lgbm_state(compressed_state):
     return compressed_state
+
 
 def _compressed_lgbm_unpickle(cls, init_args, compressed_state):
     tree = cls(*init_args)

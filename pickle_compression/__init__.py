@@ -13,8 +13,7 @@ except Exception:
     __version__ = "unknown"
 
 
-def pickle_compressed(model: Any, path: Path | str, compression: str | dict = 'lzma'):
-
+def pickle_compressed(model: Any, path: Path | str, compression: str | dict = "lzma"):
     # TODO: match statement?
     if isinstance(model, Tree):
         dump_compressed(model, path, compression, dump_function=_sklearn_tree_dump_function)

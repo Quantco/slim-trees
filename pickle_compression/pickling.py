@@ -16,46 +16,49 @@ class _NoCompression:
 
 def _get_compression_from_path(path: Union[str, pathlib.Path]) -> str:
     compressions = {
-        '.gz': 'gzip',
-        '.lzma': 'lzma',
-        '.bz2': 'bz2',
-        '.pickle': 'no',
+        ".gz": "gzip",
+        ".lzma": "lzma",
+        ".bz2": "bz2",
+        ".pickle": "no",
     }
     path = pathlib.Path(path)
     if path.suffix not in compressions:
-        raise NotImplementedError(f'File extension \'{path.suffix}\' not supported')
+        raise NotImplementedError(f"File extension '{path.suffix}' not supported")
     return compressions[path.suffix]
 
 
 def _get_compression_library(compression_method: str) -> Any:
-    compression_library = {'no': _NoCompression(), 'lzma': lzma, 'gzip': gzip, 'bz2': bz2}
+    compression_library = {
+        "no": _NoCompression(),
+        "lzma": lzma,
+        "gzip": gzip,
+        "bz2": bz2,
+    }
     if compression_method not in compression_library:
-        raise ValueError(f'Compression method {compression_method} not implemented.')
+        raise ValueError(f"Compression method {compression_method} not implemented.")
     return compression_library[compression_method]
 
 
 def _get_default_kwargs(compression_method: str) -> Dict[str, Any]:
-    defaults = {'gzip': {'compresslevel': 1}}
+    defaults = {"gzip": {"compresslevel": 1}}
     return defaults.get(compression_method, {})
 
 
 def _unpack_compression_args(
     compression: Optional[Union[str, Dict[str, Any]]] = None,
-    path: Optional[Union[str, pathlib.Path]] = None
+    path: Optional[Union[str, pathlib.Path]] = None,
 ) -> Tuple[str, dict]:
     if compression is not None:
         if isinstance(compression, str):
             return compression, _get_default_kwargs(compression)
         elif isinstance(compression, dict):
-            return compression['method'], {
-                k: compression[k] for k in compression.keys() if k != 'method'
-            }
-        raise ValueError('compression must be either a string or a dict')
+            return compression["method"], {k: compression[k] for k in compression.keys() if k != "method"}
+        raise ValueError("compression must be either a string or a dict")
     if path is not None:
         # try to find out the compression using the file extension
         compression_method = _get_compression_from_path(path)
         return compression_method, _get_default_kwargs(compression_method)
-    raise ValueError('path or compression must not be None.')
+    raise ValueError("path or compression must not be None.")
 
 
 def dump_compressed(
@@ -79,14 +82,11 @@ def dump_compressed(
         dump_function = pickle.dump
 
     compression_method, kwargs = _unpack_compression_args(compression, path)
-    with _get_compression_library(compression_method).open(path, mode='wb', **kwargs) as file:
+    with _get_compression_library(compression_method).open(path, mode="wb", **kwargs) as file:
         dump_function(obj, file)
 
 
-def load_compressed(
-    path: Union[str, pathlib.Path],
-    compression: Optional[Union[str, dict]] = None
-) -> Any:
+def load_compressed(path: Union[str, pathlib.Path], compression: Optional[Union[str, dict]] = None) -> Any:
     """
     Loads a compressed model.
     :param path: where to load the object from
@@ -95,14 +95,14 @@ def load_compressed(
                         Inspired by the pandas.to_csv interface.
     """
     compression_method, kwargs = _unpack_compression_args(compression, path)
-    with _get_compression_library(compression_method).open(path, mode='rb', **kwargs) as file:
+    with _get_compression_library(compression_method).open(path, mode="rb", **kwargs) as file:
         return pickle.load(file)
 
 
 def get_pickled_size(
     obj: Any,
-    compression: Union[str, dict] = 'lzma',
-    dump_function: Optional[Callable] = None
+    compression: Union[str, dict] = "lzma",
+    dump_function: Optional[Callable] = None,
 ) -> int:
     """
     Returns the size that an object would take on disk if pickled.
@@ -119,7 +119,5 @@ def get_pickled_size(
 
     out = io.BytesIO()
     dump_function(obj, out)
-    compressed_bytes = _get_compression_library(compression_method).compress(
-        out.getvalue(), **kwargs
-    )
+    compressed_bytes = _get_compression_library(compression_method).compress(out.getvalue(), **kwargs)
     return len(compressed_bytes)
