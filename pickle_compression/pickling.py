@@ -41,7 +41,7 @@ def _get_compression_library(compression_method: str) -> Any:
 
 def _get_default_kwargs(compression_method: str) -> Dict[str, Any]:
     defaults = {"gzip": {"compresslevel": 1}}
-    return defaults.get(compression_method, {})
+    return defaults.get(compression_method, {})  # type: ignore
 
 
 def _unpack_compression_args(
