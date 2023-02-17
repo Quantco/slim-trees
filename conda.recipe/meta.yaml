@@ -1,7 +1,6 @@
-
 package:
   name: pickle_compression
-  version: {{ environ.get('GIT_DESCRIBE_TAG', '').lstrip('v') }}{% if environ.get('GIT_DESCRIBE_NUMBER', 0)|int != 0 %}.post{{ GIT_DESCRIBE_NUMBER }}+{{ GIT_DESCRIBE_HASH }}{% endif %}
+  version: 0.0.0
 
 source:
   git_url: ../

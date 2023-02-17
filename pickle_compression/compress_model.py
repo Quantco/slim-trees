@@ -1,11 +1,12 @@
 """
-This module changes the default pickle behavior. Instead of using pickle.dump to pickle an object, you can create a
-custom Pickler and change the default pickling behavior for certain classes by changing the dispatch_table of the
-pickler.
-In this module, a custom pickling behavior for the sklearn Tree class is specified that compresses the internal values
-from int64 to int16 and from float64 to float32 (in the value field) and from float64 to a mixture between float64
-and int16 (in the threshold field).
-You can pickle a model with custom picklers by specifying dump_function in dump_compressed in the pickling module.
+This module changes the default pickle behavior. Instead of using pickle.dump to pickle an object,
+you can create a custom Pickler and change the default pickling behavior for certain classes by
+changing the dispatch_table of the pickler.
+In this module, a custom pickling behavior for the sklearn Tree class is specified that compresses
+the internal values from int64 to int16 and from float64 to float32 (in the value field) and from
+float64 to a mixture between float64 and int16 (in the threshold field).
+You can pickle a model with custom picklers by specifying dump_function in dump_compressed in the
+pickling module.
 """
 
 import copyreg
@@ -26,15 +27,18 @@ def dump_dtype_reduction(model: Any, file: BinaryIO):
     p.dump(model)
 
 
-def dump_compressed_dtype_reduction(model: Any, path: Union[str, pathlib.Path], compression: Union[str, dict] = "lzma"):
+def dump_compressed_dtype_reduction(
+    model: Any, path: Union[str, pathlib.Path], compression: Union[str, dict] = "lzma"
+):
     """
     Pickles a model and saves a compressed version to the disk.
 
     Saves the parameters of the model as int16 and float32 instead of int64 and float64.
     :param model: the model to save
     :param path: where to save the model
-    :param compression: the compression method used. Either a string or a dict with key 'method' set to the compression
-                        method and other key-value pairs are forwarded to `open` of the compression library.
+    :param compression: the compression method used. Either a string or a dict with key 'method' set
+                        to the compression method and other key-value pairs are forwarded to `open`
+                        of the compression library.
                         Inspired by the pandas.to_csv interface.
     """
     dump_compressed(model, path, compression, dump_dtype_reduction)
@@ -64,7 +68,8 @@ def compress_tree_state(state: dict):
     assert state.keys() == {"max_depth", "node_count", "nodes", "values"}
     nodes = state["nodes"]
     # nodes is a numpy array of tuples of the following form
-    # (left_child, right_child, feature, threshold, impurity, n_node_samples, weighted_n_node_samples)
+    # (left_child, right_child, feature, threshold, impurity, n_node_samples,
+    #  weighted_n_node_samples)
     dtype_child = np.int16
     dtype_feature = np.int16
     dtype_threshold = np.float64
@@ -163,10 +168,15 @@ def decompress_tree_state(state: dict):
 def _is_in_neighborhood_of_int(arr, iinfo, eps=1e-12):
     """
     Checks if the numbers are around an integer.
-    np.abs(arr % 1 - 1) < eps checks if the number is in an epsilon neighborhood on the right side of the next int and
-    arr % 1 < eps checks if the number is in an epsilon neighborhood on the left side of the next int.
+    np.abs(arr % 1 - 1) < eps checks if the number is in an epsilon neighborhood on the right side
+    of the next int and arr % 1 < eps checks if the number is in an epsilon neighborhood on the left
+    side of the next int.
     """
-    return (np.minimum(np.abs(arr % 1 - 1), arr % 1) < eps) & (arr >= iinfo.min) & (arr <= iinfo.max)
+    return (
+        (np.minimum(np.abs(arr % 1 - 1), arr % 1) < eps)
+        & (arr >= iinfo.min)
+        & (arr <= iinfo.max)
+    )
 
 
 def compress_half_int_float_array(a, compression_dtype="int8"):

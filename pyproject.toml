@@ -5,7 +5,7 @@ requires = ['setuptools', 'setuptools-scm', 'wheel']
 version_scheme = "post-release"
 
 [tool.black]
-line-length = 120
+target-version = ["py38"]
 exclude = '''
 /(
     \.eggs
@@ -16,24 +16,39 @@ exclude = '''
 )/
 '''
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-include_trailing_comma = true
-ensure_newline_before_comments = true
-line_length = 120
-known_first_party = "pickle_compression"
-skip_glob = '\.eggs/*,\.git/*,\.venv/*,build/*,dist/*'
-default_section = 'THIRDPARTY'
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+select = [
+    # pyflakes
+    "F",
+    # pycodestyle
+    "E", "W",
+    # flake8-builtins
+    "A",
+    # flake8-bugbear
+    "B",
+    # flake8-comprehensions
+    "C4",
+    # flake8-simplify
+    "SIM",
+    # flake8-unused-arguments
+    "ARG",
+    # pylint
+    "PL",
+    # tidy
+    "TID",
+    # isort
+    "I",
+    # pep8-naming
+    "N",
+    # pyupgrade
+    "UP"
+]
 
 [tool.mypy]
-python_version = '3.8'
+python_version = "3.8"
 ignore_missing_imports = true
 no_implicit_optional = true
 check_untyped_defs = true
-
-[tool.docformatter]
-pre-summary-newline = true
-recursive = true
-wrap-descriptions = 88
-wrap-summaries = 88

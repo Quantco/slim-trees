@@ -16,8 +16,8 @@ env:
 
 jobs:
   linux-unittests:
-    name: "Linux - unit tests - Python ${{ matrix.PYTHON_VERSION }}"
-    timeout-minutes: 30
+    name: "Unit tests - Python ${{ matrix.PYTHON_VERSION }}"
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -40,3 +40,17 @@ jobs:
         uses: pavelzw/pytest-action@v2
         with:
           report-title: "Unit tests Linux - Python ${{ matrix.PYTHON_VERSION }}"
+
+  pre-commit:  # todo switch to pre-commit.ci
+    name: "Pre-commit checks"
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v3
+      - name: Install Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Run pre-commit checks
+        uses: pre-commit/action@v3.0.0
