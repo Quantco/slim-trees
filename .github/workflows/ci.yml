@@ -40,3 +40,20 @@ jobs:
         uses: pavelzw/pytest-action@v2
         with:
           report-title: "Unit tests Linux - Python ${{ matrix.PYTHON_VERSION }}"
+
+  pre-commit:
+    name: "Pre-commit checks"
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v3
+      - name: Set up Conda env
+        uses: mamba-org/provision-with-micromamba@v15
+        with:
+          cache-env: true
+          extra-specs: |
+            python=3.11
+            pre-commit
+      - name: Run pre-commit checks
+        run: pre-commit run --all-files
