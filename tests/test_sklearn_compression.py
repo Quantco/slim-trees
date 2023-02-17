@@ -1,15 +1,19 @@
 import os
 
 import numpy as np
-import pytest as pytest
+import pytest
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble.tests.test_bagging import diabetes
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import check_random_state
 
-from pickle_compression.compress_model import dump_compressed_dtype_reduction, compress_half_int_float_array, \
-    decompress_half_int_float_array, _is_in_neighborhood_of_int
-from pickle_compression.pickling import load_compressed, dump_compressed
+from pickle_compression.compress_model import (
+    _is_in_neighborhood_of_int,
+    compress_half_int_float_array,
+    decompress_half_int_float_array,
+    dump_compressed_dtype_reduction,
+)
+from pickle_compression.pickling import dump_compressed, load_compressed
 
 
 @pytest.fixture
@@ -33,24 +37,26 @@ def decision_tree_regressor(rng):
 
 
 def test_compressed_predictions(diabetes_toy_df, random_forest_regressor, tmp_path):
-    X, y = diabetes_toy_df
+    X, y = diabetes_toy_df  # noqa: N806
     random_forest_regressor.fit(X, y)
 
-    model_path = tmp_path / 'model_dtype_reduction.pickle.lzma'
+    model_path = tmp_path / "model_dtype_reduction.pickle.lzma"
     dump_compressed_dtype_reduction(random_forest_regressor, model_path)
-    model_dtype_reduction = load_compressed(model_path, 'lzma')
+    model_dtype_reduction = load_compressed(model_path, "lzma")
     prediction_no_reduction = random_forest_regressor.predict(X)
     prediction_reduction = model_dtype_reduction.predict(X)
     np.testing.assert_allclose(prediction_no_reduction, prediction_reduction)
 
 
-def test_compressed_internal_structure(diabetes_toy_df, decision_tree_regressor, tmp_path):
-    X, y = diabetes_toy_df
+def test_compressed_internal_structure(
+    diabetes_toy_df, decision_tree_regressor, tmp_path
+):
+    X, y = diabetes_toy_df  # noqa: N806
     decision_tree_regressor.fit(X, y)
 
-    model_path = tmp_path / 'model_dtype_reduction.pickle.lzma'
+    model_path = tmp_path / "model_dtype_reduction.pickle.lzma"
     dump_compressed_dtype_reduction(decision_tree_regressor, model_path)
-    model_dtype_reduction = load_compressed(model_path, 'lzma')
+    model_dtype_reduction = load_compressed(model_path, "lzma")
 
     tree_no_reduction = decision_tree_regressor.tree_
     tree_dtype_reduction = model_dtype_reduction.tree_
@@ -75,16 +81,16 @@ def test_compressed_internal_structure(diabetes_toy_df, decision_tree_regressor,
 
 
 def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):
-    X, y = diabetes_toy_df
+    X, y = diabetes_toy_df  # noqa: N806
     random_forest_regressor.fit(X, y)
 
-    model_path_dtype_reduction = tmp_path / 'model_dtype_reduction.pickle.lzma'
-    model_path_no_reduction = tmp_path / 'model_no_reduction.pickle.lzma'
+    model_path_dtype_reduction = tmp_path / "model_dtype_reduction.pickle.lzma"
+    model_path_no_reduction = tmp_path / "model_no_reduction.pickle.lzma"
     dump_compressed_dtype_reduction(random_forest_regressor, model_path_dtype_reduction)
     dump_compressed(random_forest_regressor, model_path_no_reduction)
     size_no_reduction = os.path.getsize(model_path_no_reduction)
     size_dtype_reduction = os.path.getsize(model_path_dtype_reduction)
-    assert size_dtype_reduction < .5 * size_no_reduction
+    assert size_dtype_reduction < 0.5 * size_no_reduction
 
 
 def test_compress_half_int_float_array():
@@ -95,5 +101,5 @@ def test_compress_half_int_float_array():
 
 def test_compress_is_compressible_edge_cases():
     a2 = np.array([1.9999999999999, 2.0000000000001])
-    is_compressible = _is_in_neighborhood_of_int(a2, np.iinfo('int8'), eps=1e-12)
+    is_compressible = _is_in_neighborhood_of_int(a2, np.iinfo("int8"), eps=1e-12)
     assert np.all(is_compressible)
