@@ -16,7 +16,6 @@ env:
 
 jobs:
   linux-unittests:
-    if: false
     name: "Unit tests - Python ${{ matrix.PYTHON_VERSION }}"
     timeout-minutes: 15
     runs-on: ubuntu-latest
