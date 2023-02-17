@@ -31,8 +31,6 @@ select = [
     "B",
     # flake8-comprehensions
     "C4",
-    # flake8-quotes
-    "Q",
     # flake8-simplify
     "SIM",
     # flake8-unused-arguments
