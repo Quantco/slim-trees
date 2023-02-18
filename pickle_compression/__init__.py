@@ -38,10 +38,13 @@ def pickle_compressed(
             model, path, compression, dump_function=pickle_sklearn_compressed
         )
     elif str(model) in ["LGBMClassifier()", "LGBMRegressor"]:
-        from lgbm_booster import pickle_lgbm_booster_compressed
+        from . import lgbm_booster  # import pickle_lgbm_booster_compressed
 
         dump_compressed(
-            model, path, compression, dump_function=pickle_lgbm_booster_compressed
+            model,
+            path,
+            compression,
+            dump_function=lgbm_booster.pickle_lgbm_booster_compressed,
         )
     else:
         raise NotImplementedError(

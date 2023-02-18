@@ -46,28 +46,30 @@ def _compressed_lgbm_pickle(lgbm_booster: Booster):
     dump_dict = lgbm_booster.dump_model()
 
     # transform and compress state
-    compressed_state = _compress_lgbm_state(dump_dict)
+    compressed_state = _compress_lgbm_state(lgbm_booster)
 
     # return function to unpickle again
     return _compressed_lgbm_unpickle, (cls, init_args, compressed_state)
 
 
 def _compressed_lgbm_unpickle(cls, init_args, compressed_state):
-    tree = cls(*init_args)
-    _decompress_lgbm_state(compressed_state)
+    _class, base, state = init_args  # unpack
+    state = {"model_str": compressed_state}
+    tree: Booster = cls(_class, base, state)
+    model_string = _decompress_lgbm_state(compressed_state)
     # https://github.com/microsoft/LightGBM/issues/5370
     # currently it's not possible to de-serialize out of the JSON/dict again
     # tree.__setstate__(decompressed_state)
     # TODO: find a way to create a Booster back again from it's state representation
-    return tree
+    return Booster(model_str=model_string)
 
 
-def _compress_lgbm_state(state):
+def _compress_lgbm_state(booster: Booster):
     """
     For a given state dictionary, store data in a structured format that can then
     be saved to disk in a way that can be compressed.
     """
-    return state  # TODO: actually _do_ something
+    return booster.model_to_string()  # TODO: actually _do_ something
 
 
 def _decompress_lgbm_state(compressed_state):
