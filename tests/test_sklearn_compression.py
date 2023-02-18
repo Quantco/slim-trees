@@ -7,7 +7,7 @@ from sklearn.ensemble.tests.test_bagging import diabetes
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import check_random_state
 
-from pickle_compression.compress_model import (
+from pickle_compression.sklearn_tree import (
     _is_in_neighborhood_of_int,
     compress_half_int_float_array,
     decompress_half_int_float_array,
