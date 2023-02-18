@@ -130,5 +130,7 @@ def get_pickled_size(
 
     out = io.BytesIO()
     dump_function(obj, out)
-    compressed_bytes = _get_compression_library(compression_method).compress(out.getvalue(), **kwargs)
+    compressed_bytes = _get_compression_library(compression_method).compress(
+        out.getvalue(), **kwargs
+    )
     return len(compressed_bytes)

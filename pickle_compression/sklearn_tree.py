@@ -1,3 +1,6 @@
+import os
+import sys
+
 try:
     from sklearn.tree._tree import Tree
 except ImportError:
@@ -5,14 +8,12 @@ except ImportError:
     sys.exit(os.EX_CONFIG)
 
 import copyreg
-from ctypes import Union
-import os
-from pathlib import Path
 import pickle
-import sys
+from pathlib import Path
+from typing import Any, BinaryIO, Union
+
 import numpy as np
 
-from typing import Any, BinaryIO
 from pickle_compression.pickling import dump_compressed
 
 
@@ -24,7 +25,7 @@ def pickle_sklearn_compressed(model: Any, file: BinaryIO):
 
 
 def dump_compressed_dtype_reduction(
-    model: Any, path: str | Path, compression: str | dict = "lzma"
+    model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
 ):
     """
     Pickles a model and saves a compressed version to the disk.

@@ -10,8 +10,8 @@ pickling module.
 """
 
 from pathlib import Path
+from typing import Any, Union
 
-from typing import Any
 import pkg_resources
 
 from pickle_compression.pickling import dump_compressed
@@ -22,7 +22,9 @@ except Exception:
     __version__ = "unknown"
 
 
-def pickle_compressed(model: Any, path: Path | str, compression: str | dict = "lzma"):
+def pickle_compressed(
+    model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
+):
     # depending on the model to be compressed/pickled, choose the respective function
     # this makes sure that we only import the things we need.
     if type(model) in [
@@ -30,18 +32,18 @@ def pickle_compressed(model: Any, path: Path | str, compression: str | dict = "l
         "RandomForestClassifier",
         "DecisionTreeRegressor",
     ]:
-        from _sklearn_tree import pickle_sklearn_compressed
+        from sklearn_tree import pickle_sklearn_compressed
 
         dump_compressed(
             model, path, compression, dump_function=pickle_sklearn_compressed
         )
     elif str(model) in ["LGBMClassifier()", "LGBMRegressor"]:
-        from ._lgbm import dump_function as _lgbm_classifier_dump_function
+        from lgbm_booster import pickle_lgbm_booster_compressed
 
         dump_compressed(
-            model, path, compression, dump_function=_lgbm_classifier_dump_function
+            model, path, compression, dump_function=pickle_lgbm_booster_compressed
         )
     else:
-        raise NotImplemented(
+        raise NotImplementedError(
             f"Compressed pickling for model of type [{type(model)}] is not supported yet."
         )
