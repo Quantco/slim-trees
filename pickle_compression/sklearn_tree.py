@@ -14,28 +14,28 @@ from typing import Any, BinaryIO
 import numpy as np
 
 
-def pickle_sklearn_compressed(model: Any, file: BinaryIO):
+def dump_sklearn(model: Any, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
-    p.dispatch_table[Tree] = compressed_tree_pickle
+    p.dispatch_table[Tree] = _compressed_tree_pickle
     p.dump(model)
 
 
-def compressed_tree_pickle(tree):
+def _compressed_tree_pickle(tree):
     assert isinstance(tree, Tree)
     cls, init_args, state = tree.__reduce__()
-    compressed_state = compress_tree_state(state)
-    return compressed_tree_unpickle, (cls, init_args, compressed_state)
+    compressed_state = _compress_tree_state(state)
+    return _compressed_tree_unpickle, (cls, init_args, compressed_state)
 
 
-def compressed_tree_unpickle(cls, init_args, state):
+def _compressed_tree_unpickle(cls, init_args, state):
     tree = cls(*init_args)
-    decompressed_state = decompress_tree_state(state)
+    decompressed_state = _decompress_tree_state(state)
     tree.__setstate__(decompressed_state)
     return tree
 
 
-def compress_tree_state(state: dict):
+def _compress_tree_state(state: dict):
     """
     Compresses a Tree state.
     :param state: dictionary with 'max_depth', 'node_count', 'nodes', 'values' as keys.
@@ -68,7 +68,7 @@ def compress_tree_state(state: dict):
     values = state["values"][is_leaf].astype(dtype_value)
     # do lossless compression for thresholds by downcasting half ints (e.g. 5.5, 10.5, ...) to int8
     thresholds = nodes["threshold"][is_not_leaf].astype(dtype_threshold)
-    thresholds = compress_half_int_float_array(thresholds)
+    thresholds = _compress_half_int_float_array(thresholds)
 
     return {
         "max_depth": state["max_depth"],
@@ -81,7 +81,7 @@ def compress_tree_state(state: dict):
     }
 
 
-def decompress_tree_state(state: dict):
+def _decompress_tree_state(state: dict):
     """
     Decompresses a Tree state.
     :param state: 'children_left', 'children_right', 'features', 'thresholds', 'values' as keys.
@@ -113,7 +113,7 @@ def decompress_tree_state(state: dict):
     children_right[is_leaf] = -1
     features[is_not_leaf] = state["features"]
     features[is_leaf] = -2  # feature of leaves is -2
-    thresholds[is_not_leaf] = decompress_half_int_float_array(state["thresholds"])
+    thresholds[is_not_leaf] = _decompress_half_int_float_array(state["thresholds"])
     thresholds[is_leaf] = -2  # threshold of leaves is -2
     values[is_leaf] = state["values"]
 
@@ -156,7 +156,7 @@ def _is_in_neighborhood_of_int(arr, iinfo, eps=1e-12):
     )
 
 
-def compress_half_int_float_array(a, compression_dtype="int8"):
+def _compress_half_int_float_array(a, compression_dtype="int8"):
     """Compress small integer and half-integer floats in a lossless fashion
 
     Idea:
@@ -184,7 +184,7 @@ def compress_half_int_float_array(a, compression_dtype="int8"):
     return state
 
 
-def decompress_half_int_float_array(state):
+def _decompress_half_int_float_array(state):
     is_compressible = state["is_compressible"]
     a = np.zeros(len(is_compressible), dtype="float64")
     a[is_compressible] = state["a2_compressible"] / 2.0
