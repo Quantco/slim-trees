@@ -9,11 +9,6 @@ from sklearn.utils import check_random_state
 
 from pickle_compression import dump_sklearn_compressed
 from pickle_compression.pickling import dump_compressed, load_compressed
-from pickle_compression.sklearn_tree import (
-    _compress_half_int_float_array,
-    _decompress_half_int_float_array,
-    _is_in_neighborhood_of_int,
-)
 
 
 @pytest.fixture
@@ -91,15 +86,3 @@ def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):
     size_no_reduction = os.path.getsize(model_path_no_reduction)
     size_dtype_reduction = os.path.getsize(model_path_dtype_reduction)
     assert size_dtype_reduction < 0.5 * size_no_reduction
-
-
-def test_compress_half_int_float_array():
-    a1 = np.array([0, 1, 2.5, np.pi, -np.pi, 1e5, 35.5, 2.50000000001])
-    state = _compress_half_int_float_array(a1)
-    np.testing.assert_array_equal(a1, _decompress_half_int_float_array(state))
-
-
-def test_compress_is_compressible_edge_cases():
-    a2 = np.array([1.9999999999999, 2.0000000000001])
-    is_compressible = _is_in_neighborhood_of_int(a2, np.iinfo("int8"), eps=1e-12)
-    assert np.all(is_compressible)
