@@ -2,7 +2,7 @@ import copyreg
 import os
 import pickle
 import sys
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 try:
     from lightgbm.basic import Booster
@@ -11,18 +11,18 @@ except ImportError:
     sys.exit(os.EX_CONFIG)
 
 
-def pickle_lgbm_compressed(model: Booster, file: BinaryIO):
+def dump_lgbm(model: Any, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
-    p.dispatch_table[Booster] = _compressed_lgbm_pickle
+    p.dispatch_table[Booster] = _compressed_booster_pickle
     p.dump(model)
 
 
-def _compressed_lgbm_pickle(lgbm_booster: Booster):
-    assert isinstance(lgbm_booster, Booster)
+def _compressed_booster_pickle(booster: Booster):
+    assert isinstance(booster, Booster)
 
     # retrieve
-    cls, init_args, _ = lgbm_booster.__reduce__()
+    cls, init_args, state = booster.__reduce__()
 
     # extract state information
     """
@@ -43,20 +43,21 @@ def _compressed_lgbm_pickle(lgbm_booster: Booster):
     # keys: (['name', 'version', 'num_class', 'num_tree_per_iteration', 'label_index',
     # 'max_feature_idx', 'objective', 'average_output', 'feature_names', 'monotone_constraints',
     # 'feature_infos', 'tree_info', 'feature_importances', 'pandas_categorical']
-    dump_dict = lgbm_booster.dump_model()
+    booster.dump_model()
 
     # transform and compress state
-    compressed_state = _compress_lgbm_state(dump_dict)
+    compressed_state = _compress_lgbm_state(state)
 
     # return function to unpickle again
-    return _compressed_lgbm_unpickle, (cls, init_args, compressed_state)
+    return _compressed_booster_unpickle, (cls, init_args, compressed_state)
 
 
-def _compressed_lgbm_unpickle(cls, init_args, compressed_state):
+def _compressed_booster_unpickle(cls, init_args, compressed_state):
     _class, base, state = init_args  # unpack
     state = {"model_str": compressed_state}
     cls(_class, base, state)
-    model_string = _decompress_lgbm_state(compressed_state)
+    state = _decompress_lgbm_state(compressed_state)
+    model_string = state["handle"]
     # https://github.com/microsoft/LightGBM/issues/5370
     # currently it's not possible to de-serialize out of the JSON/dict again
     # tree.__setstate__(decompressed_state)
@@ -64,12 +65,12 @@ def _compressed_lgbm_unpickle(cls, init_args, compressed_state):
     return Booster(model_str=model_string)
 
 
-def _compress_lgbm_state(booster: Booster):
+def _compress_lgbm_state(state: dict):
     """
     For a given state dictionary, store data in a structured format that can then
     be saved to disk in a way that can be compressed.
     """
-    return booster  # booster.model_to_string()  # TODO: actually _do_ something
+    return state  # TODO: actually _do_ something
 
 
 def _decompress_lgbm_state(compressed_state):

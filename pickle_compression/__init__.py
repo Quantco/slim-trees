@@ -23,7 +23,7 @@ except Exception:
     __version__ = "unknown"
 
 
-def pickle_sklearn_compressed(
+def dump_sklearn_compressed(
     model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
 ):
     """
@@ -37,14 +37,14 @@ def pickle_sklearn_compressed(
                         of the compression library.
                         Inspired by the pandas.to_csv interface.
     """
-    from pickle_compression.sklearn_tree import pickle_sklearn_compressed
+    from pickle_compression.sklearn_tree import dump_sklearn
 
-    dump_compressed(model, path, compression, pickle_sklearn_compressed)
+    dump_compressed(model, path, compression, dump_sklearn)
 
 
-def pickle_booster_compressed(
+def dump_lgbm_compressed(
     model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
 ):
-    from pickle_compression.lgbm_booster import pickle_lgbm_compressed
+    from pickle_compression.lgbm_booster import dump_lgbm
 
-    dump_compressed(model, path, compression, pickle_lgbm_compressed)
+    dump_compressed(model, path, compression, dump_lgbm)
