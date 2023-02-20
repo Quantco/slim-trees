@@ -4,7 +4,7 @@ from sklearn_tree import dump_sklearn
 from examples.utils import load_data, print_model_size
 
 
-def train_model():
+def train_model() -> RandomForestRegressor:
     regressor = RandomForestRegressor(n_estimators=100, random_state=42)
     regressor.fit(*load_data())
     return regressor

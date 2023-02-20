@@ -1,12 +1,13 @@
 import time
 from itertools import product
+from typing import Any, Callable, List, Optional, Tuple
 
 import pandas as pd
 from pickling import get_pickled_size
 from sklearn.preprocessing import LabelEncoder
 
 
-def load_data():
+def load_data() -> Tuple[pd.DataFrame, pd.Series]:
     df = pd.read_csv("great_lakes_1.csv")
     df.drop(["lat", "long"], axis=1, inplace=True)
     cols = ["region", "type", "laundry_options", "parking_options"]
@@ -23,7 +24,9 @@ def load_data():
     return X, y
 
 
-def print_model_size(model, dump, compressions=None):
+def print_model_size(
+    model: Any, dump: Callable, compressions: Optional[List[str]] = None
+):
     if not compressions:
         compressions = ["no", "lzma", "bz2", "gzip"]
     for compression, dump_function in product(compressions, [None, dump]):

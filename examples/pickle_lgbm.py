@@ -1,3 +1,6 @@
+import pathlib
+from typing import Union
+
 import lightgbm as lgb
 from lgbm_booster import dump_lgbm
 from lightgbm import Booster
@@ -5,17 +8,17 @@ from lightgbm import Booster
 from examples.utils import load_data, print_model_size
 
 
-def train_model():
+def train_model() -> lgb.LGBMRegressor:
     regressor = lgb.LGBMRegressor(n_estimators=1, random_state=42)
     regressor.fit(*load_data())
     return regressor
 
 
-def load_model(path):
+def load_model(path) -> Booster:
     return Booster(model_file=path)
 
 
-def dump_model_string(booster: Booster, path):
+def dump_model_string(booster: Booster, path: Union[str, pathlib.Path]):
     with open(path, "w") as f:
         f.write(booster.model_to_string())
 
