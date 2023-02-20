@@ -9,12 +9,9 @@ except ImportError:
 
 import copyreg
 import pickle
-from pathlib import Path
-from typing import Any, BinaryIO, Union
+from typing import Any, BinaryIO
 
 import numpy as np
-
-from pickle_compression.pickling import dump_compressed
 
 
 def pickle_sklearn_compressed(model: Any, file: BinaryIO):
@@ -22,23 +19,6 @@ def pickle_sklearn_compressed(model: Any, file: BinaryIO):
     p.dispatch_table = copyreg.dispatch_table.copy()
     p.dispatch_table[Tree] = compressed_tree_pickle
     p.dump(model)
-
-
-def dump_compressed_dtype_reduction(
-    model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
-):
-    """
-    Pickles a model and saves a compressed version to the disk.
-
-    Saves the parameters of the model as int16 and float32 instead of int64 and float64.
-    :param model: the model to save
-    :param path: where to save the model
-    :param compression: the compression method used. Either a string or a dict with key 'method' set
-                        to the compression method and other key-value pairs are forwarded to `open`
-                        of the compression library.
-                        Inspired by the pandas.to_csv interface.
-    """
-    dump_compressed(model, path, compression, pickle_sklearn_compressed)
 
 
 def compressed_tree_pickle(tree):

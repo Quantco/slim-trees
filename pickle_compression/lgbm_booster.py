@@ -7,7 +7,7 @@ from typing import BinaryIO
 try:
     from lightgbm.basic import Booster
 except ImportError:
-    print("LighGBM does not seem to be installed.")
+    print("LightGBM does not seem to be installed.")
     sys.exit(os.EX_CONFIG)
 
 
@@ -37,7 +37,7 @@ def _compressed_lgbm_pickle(lgbm_booster: Booster):
     """
 
     # this dataframe contains meta-information about each tree (maybe not important/redundant)
-    lgbm_booster.trees_to_dataframe()
+    # lgbm_booster.trees_to_dataframe()
 
     # this contains the same information as the .model/.txt model files
     # keys: (['name', 'version', 'num_class', 'num_tree_per_iteration', 'label_index',
