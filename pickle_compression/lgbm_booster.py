@@ -55,7 +55,7 @@ def _compressed_lgbm_pickle(lgbm_booster: Booster):
 def _compressed_lgbm_unpickle(cls, init_args, compressed_state):
     _class, base, state = init_args  # unpack
     state = {"model_str": compressed_state}
-    tree: Booster = cls(_class, base, state)
+    cls(_class, base, state)
     model_string = _decompress_lgbm_state(compressed_state)
     # https://github.com/microsoft/LightGBM/issues/5370
     # currently it's not possible to de-serialize out of the JSON/dict again
