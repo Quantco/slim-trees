@@ -7,13 +7,13 @@ from sklearn.ensemble.tests.test_bagging import diabetes
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import check_random_state
 
-from pickle_compression.compress_model import (
+from pickle_compression import pickle_sklearn_compressed
+from pickle_compression.pickling import dump_compressed, load_compressed
+from pickle_compression.sklearn_tree import (
     _is_in_neighborhood_of_int,
     compress_half_int_float_array,
     decompress_half_int_float_array,
-    dump_compressed_dtype_reduction,
 )
-from pickle_compression.pickling import dump_compressed, load_compressed
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def test_compressed_predictions(diabetes_toy_df, random_forest_regressor, tmp_pa
     random_forest_regressor.fit(X, y)
 
     model_path = tmp_path / "model_dtype_reduction.pickle.lzma"
-    dump_compressed_dtype_reduction(random_forest_regressor, model_path)
+    pickle_sklearn_compressed(random_forest_regressor, model_path)
     model_dtype_reduction = load_compressed(model_path, "lzma")
     prediction_no_reduction = random_forest_regressor.predict(X)
     prediction_reduction = model_dtype_reduction.predict(X)
@@ -55,7 +55,7 @@ def test_compressed_internal_structure(
     decision_tree_regressor.fit(X, y)
 
     model_path = tmp_path / "model_dtype_reduction.pickle.lzma"
-    dump_compressed_dtype_reduction(decision_tree_regressor, model_path)
+    pickle_sklearn_compressed(decision_tree_regressor, model_path)
     model_dtype_reduction = load_compressed(model_path, "lzma")
 
     tree_no_reduction = decision_tree_regressor.tree_
@@ -86,7 +86,7 @@ def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):
 
     model_path_dtype_reduction = tmp_path / "model_dtype_reduction.pickle.lzma"
     model_path_no_reduction = tmp_path / "model_no_reduction.pickle.lzma"
-    dump_compressed_dtype_reduction(random_forest_regressor, model_path_dtype_reduction)
+    pickle_sklearn_compressed(random_forest_regressor, model_path_dtype_reduction)
     dump_compressed(random_forest_regressor, model_path_no_reduction)
     size_no_reduction = os.path.getsize(model_path_no_reduction)
     size_dtype_reduction = os.path.getsize(model_path_dtype_reduction)

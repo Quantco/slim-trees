@@ -1,47 +1,24 @@
-"""
-This module changes the default pickle behavior. Instead of using pickle.dump to pickle an object,
-you can create a custom Pickler and change the default pickling behavior for certain classes by
-changing the dispatch_table of the pickler.
-In this module, a custom pickling behavior for the sklearn Tree class is specified that compresses
-the internal values from int64 to int16 and from float64 to float32 (in the value field) and from
-float64 to a mixture between float64 and int16 (in the threshold field).
-You can pickle a model with custom picklers by specifying dump_function in dump_compressed in the
-pickling module.
-"""
+import os
+import sys
+
+try:
+    from sklearn.tree._tree import Tree
+except ImportError:
+    print("scikit-learn does not seem to be installed.")
+    sys.exit(os.EX_CONFIG)
 
 import copyreg
-import pathlib
 import pickle
-from typing import Any, BinaryIO, Union
+from typing import Any, BinaryIO
 
 import numpy as np
-from sklearn.tree._tree import Tree
-
-from pickle_compression.pickling import dump_compressed
 
 
-def dump_dtype_reduction(model: Any, file: BinaryIO):
+def pickle_sklearn_compressed(model: Any, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
     p.dispatch_table[Tree] = compressed_tree_pickle
     p.dump(model)
-
-
-def dump_compressed_dtype_reduction(
-    model: Any, path: Union[str, pathlib.Path], compression: Union[str, dict] = "lzma"
-):
-    """
-    Pickles a model and saves a compressed version to the disk.
-
-    Saves the parameters of the model as int16 and float32 instead of int64 and float64.
-    :param model: the model to save
-    :param path: where to save the model
-    :param compression: the compression method used. Either a string or a dict with key 'method' set
-                        to the compression method and other key-value pairs are forwarded to `open`
-                        of the compression library.
-                        Inspired by the pandas.to_csv interface.
-    """
-    dump_compressed(model, path, compression, dump_dtype_reduction)
 
 
 def compressed_tree_pickle(tree):
