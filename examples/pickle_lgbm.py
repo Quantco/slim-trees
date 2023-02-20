@@ -1,46 +1,38 @@
-import time
-from itertools import product
+import pathlib
+from typing import Union
 
 import lightgbm as lgb
-import pandas as pd
 from lgbm_booster import dump_lgbm
 from lightgbm import Booster
-from pickling import get_pickled_size
-from sklearn.preprocessing import LabelEncoder
+
+from examples.utils import load_data, print_model_size
 
 
-def train_model():
-    df = pd.read_csv("great_lakes_1.csv")
-    df.drop(["lat", "long"], axis=1, inplace=True)
-    cols = ["region", "type", "laundry_options", "parking_options"]
-    label_encoder = LabelEncoder()
-    mapping_dict = {}
-    for col in cols:
-        df[col] = label_encoder.fit_transform(df[col])
-        le_name_mapping = dict(
-            zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_))
-        )
-        mapping_dict[col] = le_name_mapping
-    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=42)
-    X = df.drop("price", axis=1)  # noqa: N806
-    y = df["price"]
-    regressor.fit(X, y)
+def train_model() -> lgb.LGBMRegressor:
+    regressor = lgb.LGBMRegressor(n_estimators=1, random_state=42)
+    regressor.fit(*load_data())
     return regressor
 
 
-def load_model():
-    return Booster(model_file="lgb1.model")
+def load_model(path) -> Booster:
+    return Booster(model_file=path)
 
 
-model = load_model()
+def dump_model_string(booster: Booster, path: Union[str, pathlib.Path]):
+    with open(path, "w") as f:
+        f.write(booster.model_to_string())
 
-for compression, dump_function in product(
-    ["no", "lzma", "bz2", "gzip"], [None, dump_lgbm]
-):
-    start = time.time()
-    size = get_pickled_size(model, compression=compression, dump_function=dump_function)
-    print(
-        f"Compression {compression}, "
-        f"dump_function {None if not dump_function else dump_function.__name__}: "
-        f"{size / 2**20:.2f} MB / {time.time() - start:.2f} s"
-    )
+
+model = train_model()
+# dump_model_string(model.booster_, "great_lakes_1.model")
+
+# x, y = load_data()
+# model = load_model("great_lakes_1.model")
+# model_new = load_model("great_lakes_1_omit_values.model")
+
+# y_pred = model.predict(x)
+# y_pred_new = model_new.predict(x)
+# diff = y_pred - y_pred_new
+# print(diff.max(), diff.min(), diff.mean(), diff.std())
+
+print_model_size(model, dump_lgbm)
