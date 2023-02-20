@@ -11,7 +11,7 @@ except ImportError:
     sys.exit(os.EX_CONFIG)
 
 
-def pickle_lgbm_booster_compressed(model: Booster, file: BinaryIO):
+def pickle_lgbm_compressed(model: Booster, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
     p.dispatch_table[Booster] = _compressed_lgbm_pickle

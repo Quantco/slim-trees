@@ -37,14 +37,14 @@ def pickle_sklearn_compressed(
                         of the compression library.
                         Inspired by the pandas.to_csv interface.
     """
-    from sklearn_tree import pickle_sklearn_compressed
+    from pickle_compression.sklearn_tree import pickle_sklearn_compressed
 
-    dump_compressed(model, path, compression, dump_function=pickle_sklearn_compressed)
+    dump_compressed(model, path, compression, pickle_sklearn_compressed)
 
 
 def pickle_booster_compressed(
     model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
 ):
-    from lgbm_booster import pickle_lgbm_compressed
+    from pickle_compression.lgbm_booster import pickle_lgbm_compressed
 
-    dump_compressed(model, path, compression, dump_function=pickle_lgbm_compressed)
+    dump_compressed(model, path, compression, pickle_lgbm_compressed)
