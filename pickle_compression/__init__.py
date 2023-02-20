@@ -22,31 +22,22 @@ except Exception:
     __version__ = "unknown"
 
 
-def pickle_compressed(
+def pickle_sklearn_compressed(
     model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
 ):
-    # depending on the model to be compressed/pickled, choose the respective function
-    # this makes sure that we only import the things we need.
-    if type(model) in [
-        "RandomForestRegressor",
-        "RandomForestClassifier",
-        "DecisionTreeRegressor",
-    ]:
-        from sklearn_tree import pickle_sklearn_compressed
+    from sklearn_tree import pickle_sklearn_compressed
 
-        dump_compressed(
-            model, path, compression, dump_function=pickle_sklearn_compressed
-        )
-    elif str(model) in ["LGBMClassifier()", "LGBMRegressor"]:
-        from . import lgbm_booster  # import pickle_lgbm_booster_compressed
+    dump_compressed(model, path, compression, dump_function=pickle_sklearn_compressed)
 
-        dump_compressed(
-            model,
-            path,
-            compression,
-            dump_function=lgbm_booster.pickle_lgbm_booster_compressed,
-        )
-    else:
-        raise NotImplementedError(
-            f"Compressed pickling for model of type [{type(model)}] is not supported yet."
-        )
+
+def pickle_booster_compressed(
+    model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
+):
+    from lgbm_booster import pickle_lgbm_booster_compressed
+
+    dump_compressed(
+        model,
+        path,
+        compression,
+        dump_function=pickle_lgbm_booster_compressed,
+    )
