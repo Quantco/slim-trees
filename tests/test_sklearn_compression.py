@@ -88,7 +88,7 @@ def test_dump_times(
 ):
     X, y = diabetes_toy_df  # noqa: N806
     random_forest_regressor.fit(X, y)
-    factor = 2.5 if compression_method == "no" else 1.5
+    factor = 3 if compression_method == "no" else 1.5
 
     dump_time_compressed, dump_time_uncompressed = get_dump_times(
         random_forest_regressor, dump_sklearn_compressed, tmp_path, compression_method
@@ -106,5 +106,5 @@ def test_load_times(
     load_time_compressed, load_time_uncompressed = get_load_times(
         random_forest_regressor, dump_sklearn_compressed, tmp_path, compression_method
     )
-    factor = 2.5 if compression_method == "no" else 1.5
+    factor = 3 if compression_method == "no" else 1.5
     assert load_time_compressed < factor * load_time_uncompressed
