@@ -3,32 +3,21 @@ import os
 import numpy as np
 import pytest
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble.tests.test_bagging import diabetes
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.utils import check_random_state
+from test_util import get_dump_times, get_load_times
 
 from pickle_compression import dump_sklearn_compressed
 from pickle_compression.pickling import dump_compressed, load_compressed
-from pickle_compression.sklearn_tree import (
-    _compress_half_int_float_array,
-    _decompress_half_int_float_array,
-    _is_in_neighborhood_of_int,
-)
-
-
-@pytest.fixture
-def diabetes_toy_df():
-    return diabetes.data[:50], diabetes.target[:50]
-
-
-@pytest.fixture
-def rng():
-    return check_random_state(0)
 
 
 @pytest.fixture
 def random_forest_regressor(rng):
     return RandomForestRegressor(n_estimators=100, random_state=rng)
+
+
+@pytest.fixture
+def random_forest_regressor_large(rng):
+    return RandomForestRegressor(n_estimators=1000, random_state=rng)
 
 
 @pytest.fixture
@@ -40,7 +29,7 @@ def test_compressed_predictions(diabetes_toy_df, random_forest_regressor, tmp_pa
     X, y = diabetes_toy_df  # noqa: N806
     random_forest_regressor.fit(X, y)
 
-    model_path = tmp_path / "model_dtype_reduction.pickle.lzma"
+    model_path = tmp_path / "model_compressed.pickle.lzma"
     dump_sklearn_compressed(random_forest_regressor, model_path)
     model_dtype_reduction = load_compressed(model_path, "lzma")
     prediction_no_reduction = random_forest_regressor.predict(X)
@@ -93,13 +82,32 @@ def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):
     assert size_dtype_reduction < 0.5 * size_no_reduction
 
 
-def test_compress_half_int_float_array():
-    a1 = np.array([0, 1, 2.5, np.pi, -np.pi, 1e5, 35.5, 2.50000000001])
-    state = _compress_half_int_float_array(a1)
-    np.testing.assert_array_equal(a1, _decompress_half_int_float_array(state))
+@pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
+def test_dump_times(
+    diabetes_toy_df, random_forest_regressor, tmp_path, compression_method
+):
+    X, y = diabetes_toy_df  # noqa: N806
+    random_forest_regressor.fit(X, y)
+    factor = 4 if compression_method == "no" else 1.5
+
+    dump_time_compressed, dump_time_uncompressed = get_dump_times(
+        random_forest_regressor, dump_sklearn_compressed, tmp_path, compression_method
+    )
+    assert dump_time_compressed < factor * dump_time_uncompressed
 
 
-def test_compress_is_compressible_edge_cases():
-    a2 = np.array([1.9999999999999, 2.0000000000001])
-    is_compressible = _is_in_neighborhood_of_int(a2, np.iinfo("int8"), eps=1e-12)
-    assert np.all(is_compressible)
+@pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
+def test_load_times(
+    diabetes_toy_df, random_forest_regressor, tmp_path, compression_method
+):
+    X, y = diabetes_toy_df  # noqa: N806
+    random_forest_regressor.fit(X, y)
+
+    load_time_compressed, load_time_uncompressed = get_load_times(
+        random_forest_regressor, dump_sklearn_compressed, tmp_path, compression_method
+    )
+    factor = 4 if compression_method == "no" else 1.5
+    assert load_time_compressed < factor * load_time_uncompressed
+
+
+# todo add tests for large models

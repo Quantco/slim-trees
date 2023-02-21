@@ -1,7 +1,7 @@
 from sklearn.ensemble import RandomForestRegressor
 from sklearn_tree import dump_sklearn
 
-from examples.utils import load_data, print_model_size
+from examples.utils import evaluate_compression_performance, load_data
 
 
 def train_model() -> RandomForestRegressor:
@@ -12,4 +12,4 @@ def train_model() -> RandomForestRegressor:
 
 model = train_model()
 
-print_model_size(model, dump_sklearn)
+evaluate_compression_performance(model, dump_sklearn)

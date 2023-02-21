@@ -1,6 +1,11 @@
 import os
 import sys
 
+from pickle_compression.compression_utils import (
+    compress_half_int_float_array,
+    decompress_half_int_float_array,
+)
+
 try:
     from sklearn.tree._tree import Tree
 except ImportError:
@@ -17,19 +22,19 @@ import numpy as np
 def dump_sklearn(model: Any, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
-    p.dispatch_table[Tree] = _compressed_tree_pickle
+    p.dispatch_table[Tree] = _tree_pickle
     p.dump(model)
 
 
-def _compressed_tree_pickle(tree):
+def _tree_pickle(tree):
     assert isinstance(tree, Tree)
-    cls, init_args, state = tree.__reduce__()
+    reconstructor, args, state = tree.__reduce__()
     compressed_state = _compress_tree_state(state)
-    return _compressed_tree_unpickle, (cls, init_args, compressed_state)
+    return _tree_unpickle, (reconstructor, args, compressed_state)
 
 
-def _compressed_tree_unpickle(cls, init_args, state):
-    tree = cls(*init_args)
+def _tree_unpickle(reconstructor, args, state):
+    tree = reconstructor(*args)
     decompressed_state = _decompress_tree_state(state)
     tree.__setstate__(decompressed_state)
     return tree
@@ -68,7 +73,7 @@ def _compress_tree_state(state: dict):
     values = state["values"][is_leaf].astype(dtype_value)
     # do lossless compression for thresholds by downcasting half ints (e.g. 5.5, 10.5, ...) to int8
     thresholds = nodes["threshold"][is_not_leaf].astype(dtype_threshold)
-    thresholds = _compress_half_int_float_array(thresholds)
+    thresholds = compress_half_int_float_array(thresholds)
 
     return {
         "max_depth": state["max_depth"],
@@ -113,7 +118,7 @@ def _decompress_tree_state(state: dict):
     children_right[is_leaf] = -1
     features[is_not_leaf] = state["features"]
     features[is_leaf] = -2  # feature of leaves is -2
-    thresholds[is_not_leaf] = _decompress_half_int_float_array(state["thresholds"])
+    thresholds[is_not_leaf] = decompress_half_int_float_array(state["thresholds"])
     thresholds[is_leaf] = -2  # threshold of leaves is -2
     values[is_leaf] = state["values"]
 
@@ -140,53 +145,3 @@ def _decompress_tree_state(state: dict):
         "nodes": nodes,
         "values": values,
     }
-
-
-def _is_in_neighborhood_of_int(arr, iinfo, eps=1e-12):
-    """
-    Checks if the numbers are around an integer.
-    np.abs(arr % 1 - 1) < eps checks if the number is in an epsilon neighborhood on the right side
-    of the next int and arr % 1 < eps checks if the number is in an epsilon neighborhood on the left
-    side of the next int.
-    """
-    return (
-        (np.minimum(np.abs(arr % 1 - 1), arr % 1) < eps)
-        & (arr >= iinfo.min)
-        & (arr <= iinfo.max)
-    )
-
-
-def _compress_half_int_float_array(a, compression_dtype="int8"):
-    """Compress small integer and half-integer floats in a lossless fashion
-
-    Idea:
-        If most values in array <a> are small integers or half-integers, we can
-        store them as float16, while keeping the rest as float64.
-
-    Technical details:
-        - The boolean array (2 * a) % 1 == 0 indicates the integers and half-integers in <a>.
-        - int8 can represent integers between np.iinfo('int8').min and np.iinfo('int8').max
-    """
-    info = np.iinfo(compression_dtype)
-    a2 = 2.0 * a
-    is_compressible = _is_in_neighborhood_of_int(a2, info)
-    not_compressible = np.logical_not(is_compressible)
-
-    a2_compressible = a2[is_compressible].astype(compression_dtype)
-    a_incompressible = a[not_compressible]
-
-    state = {
-        "is_compressible": is_compressible,
-        "a2_compressible": a2_compressible,
-        "a_incompressible": a_incompressible,
-    }
-
-    return state
-
-
-def _decompress_half_int_float_array(state):
-    is_compressible = state["is_compressible"]
-    a = np.zeros(len(is_compressible), dtype="float64")
-    a[is_compressible] = state["a2_compressible"] / 2.0
-    a[np.logical_not(is_compressible)] = state["a_incompressible"]
-    return a
