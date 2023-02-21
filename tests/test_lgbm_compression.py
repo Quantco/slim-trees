@@ -3,10 +3,10 @@ import os
 import numpy as np
 import pytest
 from lightgbm import LGBMRegressor
-from pickling import dump_compressed, load_compressed
 from test_util import get_compression_times
 
 from pickle_compression import dump_lgbm_compressed
+from pickle_compression.pickling import dump_compressed, load_compressed
 
 
 @pytest.fixture

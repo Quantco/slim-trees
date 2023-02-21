@@ -3,8 +3,9 @@ from itertools import product
 from typing import Any, Callable, List, Optional, Tuple
 
 import pandas as pd
-from pickle_compression.pickling import get_pickled_size
 from sklearn.preprocessing import LabelEncoder
+
+from pickle_compression.pickling import get_pickled_size
 
 
 def load_data() -> Tuple[pd.DataFrame, pd.Series]:

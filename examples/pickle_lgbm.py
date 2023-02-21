@@ -3,12 +3,12 @@ import tempfile
 from typing import Union
 
 import lightgbm as lgb
-from pickle_compression.lgbm_booster import dump_lgbm
 from lightgbm import Booster
-from pickle_compression.pickling import load_compressed
-
 from utils import load_data, print_model_size
+
 from pickle_compression import dump_lgbm_compressed
+from pickle_compression.lgbm_booster import dump_lgbm
+from pickle_compression.pickling import load_compressed
 
 
 def train_model() -> lgb.LGBMRegressor:
