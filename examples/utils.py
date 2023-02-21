@@ -3,12 +3,12 @@ from itertools import product
 from typing import Any, Callable, List, Optional, Tuple
 
 import pandas as pd
-from pickling import get_pickled_size
+from pickle_compression.pickling import get_pickled_size
 from sklearn.preprocessing import LabelEncoder
 
 
 def load_data() -> Tuple[pd.DataFrame, pd.Series]:
-    df = pd.read_csv("great_lakes_1.csv")
+    df = pd.read_csv("examples/great_lakes_1.csv")
     df.drop(["lat", "long"], axis=1, inplace=True)
     cols = ["region", "type", "laundry_options", "parking_options"]
     label_encoder = LabelEncoder()

@@ -3,11 +3,11 @@ import tempfile
 from typing import Union
 
 import lightgbm as lgb
-from lgbm_booster import dump_lgbm
+from pickle_compression.lgbm_booster import dump_lgbm
 from lightgbm import Booster
-from pickling import load_compressed
+from pickle_compression.pickling import load_compressed
 
-from examples.utils import load_data, print_model_size
+from utils import load_data, print_model_size
 from pickle_compression import dump_lgbm_compressed
 
 
@@ -22,7 +22,7 @@ def load_model(path) -> Booster:
 
 
 def dump_model_string(booster: Booster, path: Union[str, pathlib.Path]):
-    with open(path, "w") as f:
+    with open(path, "w+") as f:
         f.write(booster.model_to_string())
 
 
@@ -34,7 +34,10 @@ with tempfile.TemporaryDirectory() as tmpdir:
     dump_lgbm_compressed(model, path, "no")
     model_compressed = load_compressed(path, "no")
 
-dump_model_string(model_compressed.booster_, "out/great_lakes_compressed.model")
+pathlib.Path("examples/out").mkdir(exist_ok=True)
+dump_model_string(
+    model_compressed.booster_, "examples/out/great_lakes_compressed.model"
+)
 
 x, y = load_data()
 y_pred = model.predict(x)
