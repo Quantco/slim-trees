@@ -1,6 +1,7 @@
 import copyreg
 import os
 import pickle
+import re
 import sys
 from typing import Any, BinaryIO, List, Tuple
 
@@ -60,12 +61,9 @@ def _decompress_booster_state(compressed_state: dict):
 def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     if not model_string.startswith("tree\nversion=v3"):
         raise ValueError("Only v3 is supported for the booster string format.")
-    print("Warning: _compress_booster_handle is not implemented")
-    import re
-
-    FRONT_STRING_REGEX = r"(?:tree\n)(?:\w+=.*\n)*(?=\nTree)"
-    BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
-    TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
+    FRONT_STRING_REGEX = r"(?:tree\n)(?:\w+=.*\n)*\n(?=Tree)"  # noqa: N806
+    BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"  # noqa: N806
+    TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"  # noqa: N806
 
     def _extract_feature(feature_line):
         feat_name, values_str = feature_line.split("=")
@@ -74,30 +72,43 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     front_str = re.findall(FRONT_STRING_REGEX, model_string)[0]
     back_str = re.findall(BACK_STRING_REGEX, model_string)[0]
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
-    trees: list[dict] = []
-    for tree_match in tree_matches:
+    trees: List[dict] = []
+    for i, tree_match in enumerate(tree_matches):
         tree_name, features_list = tree_match
-        _, tree_idx = tree_name.replace("\n", "").split(
-            "="
-        )  # TODO: not needed, I guess?
+        _, tree_idx = tree_name.replace("\n", "").split("=")
+        assert int(tree_idx) == i
 
         # extract features -- filter out empty ones
         features = [f for f in features_list.split("\n") if "=" in f]
         feats_map = dict(_extract_feature(fl) for fl in features)
 
+        def parse(str_list, dtype):
+            return np.array(str_list, dtype=dtype)
+
+        split_feature_dtype = np.int16
+        threshold_dtype = np.float64
+        decision_type_dtype = np.int8
+        left_child_dtype = np.int16
+        right_child_dtype = left_child_dtype
+        leaf_value_dtype = np.float64
+        assert len(feats_map["num_leaves"]) == 1
+        assert len(feats_map["num_cat"]) == 1
+        assert len(feats_map["is_linear"]) == 1
+        assert len(feats_map["shrinkage"]) == 1
+
         # TODO (easy): feature transformation: do it + do it somewhat more readable with wrappers
         trees.append(
             {
-                "num_leaves": int(feats_map["num_leaves"]),
-                "num_cat": int(feats_map["num_cat"]),
-                "split_feature": feats_map["split_feature"],
+                "num_leaves": int(feats_map["num_leaves"][0]),
+                "num_cat": int(feats_map["num_cat"][0]),
+                "split_feature": parse(feats_map["split_feature"], split_feature_dtype),
                 "threshold": compress_half_int_float_array(
-                    [float(f) for f in feats_map["threshold"]]
+                    parse(feats_map["threshold"], threshold_dtype)
                 ),
-                "decision_type": feats_map["decision_type"],
-                "left_child": feats_map["left_child"],
-                "right_child": feats_map["right_child"],
-                "leaf_value": feats_map["leaf_value"],
+                "decision_type": parse(feats_map["decision_type"], decision_type_dtype),
+                "left_child": parse(feats_map["left_child"], left_child_dtype),
+                "right_child": parse(feats_map["right_child"], right_child_dtype),
+                "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype),
                 "is_linear": int(feats_map["is_linear"][0]),
                 "shrinkage": float(feats_map["shrinkage"][0]),
             }
@@ -168,10 +179,13 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
         tree_str += "\ninternal_value=" + ("0.0 " * num_nodes)[:-1]
         tree_str += "\ninternal_weight=" + ("0 " * num_nodes)[:-1]
         tree_str += "\ninternal_count=" + ("0 " * num_nodes)[:-1]
-        tree_str += (
-            f"\nis_linear{tree['is_linear']}\nshrinkage={tree['shrinkage']}\n\n\n"
-        )
+        tree_str += f"\nis_linear={tree['is_linear']}"
+        tree_str += f"\nshrinkage={tree['shrinkage']}"
+        tree_str += "\n\n\n"
 
         handle += tree_str
-    handle += "end of trees\n\n" + back_str
+    handle += back_str
+    # print handle to txt
+    with open("out/great_lakes_compressed.model", "w") as f:
+        f.write(handle)
     return handle
