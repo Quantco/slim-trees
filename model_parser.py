@@ -2,6 +2,8 @@ from curses.ascii import isdigit
 import re
 from typing import Union
 import pandas as pd
+import pyarrow as pa
+from pyarrow import parquet as pq
 
 TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
 TREE_FEATURES = ["is_linear", "shrinkage"]
@@ -61,3 +63,5 @@ if __name__ == "__main__":
     # dfo = df_from_model_string(open("lgb1.txt", "r").read(), transform_values=True)
     print(df.head(50))
     df.to_parquet("lgb1.parquet")
+    table: pa.Table = pa.Table.from_pandas(df)
+    pq.write_table(table, "lgb1.parquet.lz4", compression="lz4")
