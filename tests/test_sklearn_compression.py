@@ -3,27 +3,21 @@ import os
 import numpy as np
 import pytest
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble.tests.test_bagging import diabetes
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.utils import check_random_state
+from test_util import get_compression_times
 
 from pickle_compression import dump_sklearn_compressed
 from pickle_compression.pickling import dump_compressed, load_compressed
 
 
 @pytest.fixture
-def diabetes_toy_df():
-    return diabetes.data[:50], diabetes.target[:50]
-
-
-@pytest.fixture
-def rng():
-    return check_random_state(0)
-
-
-@pytest.fixture
 def random_forest_regressor(rng):
     return RandomForestRegressor(n_estimators=100, random_state=rng)
+
+
+@pytest.fixture
+def random_forest_regressor_large(rng):
+    return RandomForestRegressor(n_estimators=1000, random_state=rng)
 
 
 @pytest.fixture
@@ -35,7 +29,7 @@ def test_compressed_predictions(diabetes_toy_df, random_forest_regressor, tmp_pa
     X, y = diabetes_toy_df  # noqa: N806
     random_forest_regressor.fit(X, y)
 
-    model_path = tmp_path / "model_dtype_reduction.pickle.lzma"
+    model_path = tmp_path / "model_compressed.pickle.lzma"
     dump_sklearn_compressed(random_forest_regressor, model_path)
     model_dtype_reduction = load_compressed(model_path, "lzma")
     prediction_no_reduction = random_forest_regressor.predict(X)
@@ -86,3 +80,23 @@ def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):
     size_no_reduction = os.path.getsize(model_path_no_reduction)
     size_dtype_reduction = os.path.getsize(model_path_dtype_reduction)
     assert size_dtype_reduction < 0.5 * size_no_reduction
+
+
+@pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
+def test_compression_times(
+    diabetes_toy_df, random_forest_regressor, tmp_path, compression_method
+):
+    X, y = diabetes_toy_df  # noqa: N806
+    random_forest_regressor.fit(X, y)
+    factor = 3
+
+    (
+        dump_time_compressed,
+        load_time_compressed,
+        dump_time_uncompressed,
+        load_time_uncompressed,
+    ) = get_compression_times(
+        random_forest_regressor, dump_sklearn_compressed, tmp_path, compression_method
+    )
+    assert dump_time_compressed < factor * dump_time_uncompressed
+    assert load_time_compressed < factor * load_time_uncompressed
