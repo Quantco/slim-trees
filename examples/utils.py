@@ -1,11 +1,13 @@
+import os
+import tempfile
 import time
 from itertools import product
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, Tuple
 
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
-from pickle_compression.pickling import get_pickled_size
+from pickle_compression.pickling import dump_compressed, load_compressed
 
 
 def load_data() -> Tuple[pd.DataFrame, pd.Series]:
@@ -25,18 +27,31 @@ def load_data() -> Tuple[pd.DataFrame, pd.Series]:
     return X, y
 
 
-def print_model_size(
-    model: Any, dump: Callable, compressions: Optional[List[str]] = None
+def evaluate_compression_performance(
+    model: Any, dump: Callable, print_performance: bool = True
 ):
-    if not compressions:
-        compressions = ["no", "lzma", "bz2", "gzip"]
+    compressions = ["no", "lzma", "bz2", "gzip"]
+    performance = []
     for compression, dump_function in product(compressions, [None, dump]):
-        start = time.time()
-        size = get_pickled_size(
-            model, compression=compression, dump_function=dump_function
-        )
-        print(
-            f"Compression {compression}, "
-            f"dump_function {None if not dump_function else dump_function.__name__}: "
-            f"{size / 2 ** 20:.2f} MB / {time.time() - start:.2f} s"
-        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = f"{tmpdir}/model"
+            start = time.time()
+            dump_compressed(model, path, compression, dump_function)
+            dump_time = time.time() - start
+            start = time.time()
+            load_compressed(path, compression)
+            load_time = time.time() - start
+            size = os.path.getsize(path)
+        performance += [
+            {
+                "compression": compression,
+                "dump_function": dump_function.__name__ if dump_function else None,
+                "size": f"{size / 2 ** 20:.2f} MB",
+                "dump_time": f"{dump_time:.3f} s",
+                "load_time": f"{load_time:.3f} s",
+            }
+        ]
+    df = pd.DataFrame(performance)
+    if print_performance:
+        print(df.to_string(index=False))
+    return df

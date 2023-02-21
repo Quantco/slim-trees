@@ -61,3 +61,6 @@ def test_load_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_metho
     )
     factor = 10 if compression_method == "no" else 7
     assert load_time_compressed < factor * load_time_uncompressed
+
+
+# todo add tests for large models

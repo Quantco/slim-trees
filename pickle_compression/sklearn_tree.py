@@ -22,18 +22,18 @@ import numpy as np
 def dump_sklearn(model: Any, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
-    p.dispatch_table[Tree] = _compressed_tree_pickle
+    p.dispatch_table[Tree] = _tree_pickle
     p.dump(model)
 
 
-def _compressed_tree_pickle(tree):
+def _tree_pickle(tree):
     assert isinstance(tree, Tree)
     reconstructor, args, state = tree.__reduce__()
     compressed_state = _compress_tree_state(state)
-    return _compressed_tree_unpickle, (reconstructor, args, compressed_state)
+    return _tree_unpickle, (reconstructor, args, compressed_state)
 
 
-def _compressed_tree_unpickle(reconstructor, args, state):
+def _tree_unpickle(reconstructor, args, state):
     tree = reconstructor(*args)
     decompressed_state = _decompress_tree_state(state)
     tree.__setstate__(decompressed_state)

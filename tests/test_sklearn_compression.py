@@ -108,3 +108,6 @@ def test_load_times(
     )
     factor = 4 if compression_method == "no" else 1.5
     assert load_time_compressed < factor * load_time_uncompressed
+
+
+# todo add tests for large models

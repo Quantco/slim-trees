@@ -3,8 +3,9 @@ import tempfile
 from typing import Union
 
 import lightgbm as lgb
+import numpy as np
 from lightgbm import Booster
-from utils import load_data, print_model_size
+from utils import evaluate_compression_performance, load_data
 
 from pickle_compression import dump_lgbm_compressed
 from pickle_compression.lgbm_booster import dump_lgbm
@@ -12,7 +13,7 @@ from pickle_compression.pickling import load_compressed
 
 
 def train_model() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(n_estimators=5000, random_state=42)
+    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=42)
     regressor.fit(*load_data())
     return regressor
 
@@ -22,11 +23,11 @@ def load_model(path) -> Booster:
 
 
 def dump_model_string(booster: Booster, path: Union[str, pathlib.Path]):
-    with open(path, "w+") as f:
+    with open(path, "w") as f:
         f.write(booster.model_to_string())
 
 
-# model = load_model("lgb1-base.model")
+# model = load_model("examples/lgb1-base.model")
 model = train_model()
 
 with tempfile.TemporaryDirectory() as tmpdir:
@@ -35,14 +36,11 @@ with tempfile.TemporaryDirectory() as tmpdir:
     model_compressed = load_compressed(path, "no")
 
 pathlib.Path("examples/out").mkdir(exist_ok=True)
-dump_model_string(
-    model_compressed.booster_, "examples/out/great_lakes_compressed.model"
-)
+dump_model_string(model_compressed.booster_, "examples/out/model_compressed.model")
 
 x, y = load_data()
 y_pred = model.predict(x)
 y_pred_new = model_compressed.predict(x)
-diff = y_pred - y_pred_new
-print(diff.max(), diff.min(), diff.mean(), diff.std())
+print(f"Maximum prediction difference: {np.abs(y_pred - y_pred_new).max()}")
 
-print_model_size(model, dump_lgbm)
+evaluate_compression_performance(model, dump_lgbm)

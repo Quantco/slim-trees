@@ -22,18 +22,18 @@ except ImportError:
 def dump_lgbm(model: Any, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
-    p.dispatch_table[Booster] = _compressed_booster_pickle
+    p.dispatch_table[Booster] = _booster_pickle
     p.dump(model)
 
 
-def _compressed_booster_pickle(booster: Booster):
+def _booster_pickle(booster: Booster):
     assert isinstance(booster, Booster)
     reconstructor, args, state = booster.__reduce__()
     compressed_state = _compress_booster_state(state)
-    return _compressed_booster_unpickle, (reconstructor, args, compressed_state)
+    return _booster_unpickle, (reconstructor, args, compressed_state)
 
 
-def _compressed_booster_unpickle(reconstructor, args, compressed_state):
+def _booster_unpickle(reconstructor, args, compressed_state):
     booster = reconstructor(*args)
     decompressed_state = _decompress_booster_state(compressed_state)
     booster.__setstate__(decompressed_state)
@@ -116,26 +116,6 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
                 "shrinkage": float(feats_map["shrinkage"][0]),
             }
         )
-
-    """
-    example
-    tree = {
-        "num_cat": 0,
-        "split_feature": np.array([2132, 44, 142, 182, 2132, 15, 261]),
-        "threshold": compress_half_int_float_array(
-            np.array([0.5, 1.522, 0.5, 0.5, 0.5, 0.5, 0.5])
-        ),
-        "decision_type": np.array([2, 2, 10, 10, 2, 2]),
-        "left_child": np.array([4, 2, -2, -3, 6, -6, -1]),
-        "right_child": np.array([1, 3, -4, -5, 5, -7, -8]),
-        "leaf_value": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-        "is_linear": 0,
-        "shrinkage": 0.05,
-    }
-    """
-
-    # todo put this somewhere in the parser where it makes sense
-    # assert model_string[tree]["num_leaves"] == len(tree["leaf_value"])
     return front_str, trees, back_str
 
 
@@ -168,7 +148,7 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
         tree_str = f"Tree={i}\n"
         tree_str += f"num_leaves={tree['num_leaves']}\nnum_cat={tree['num_cat']}\nsplit_feature="
         tree_str += " ".join([str(x) for x in tree["split_feature"]])
-        tree_str += "\nsplit_gain=" + ("0.0 " * num_nodes)[:-1]
+        tree_str += "\nsplit_gain=" + ("0 " * num_nodes)[:-1]
         threshold = decompress_half_int_float_array(tree["threshold"])
         tree_str += "\nthreshold=" + " ".join([str(x) for x in threshold])
         tree_str += "\ndecision_type=" + " ".join(
@@ -179,7 +159,7 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
         tree_str += "\nleaf_value=" + " ".join([str(x) for x in tree["leaf_value"]])
         tree_str += "\nleaf_weight=" + ("0 " * num_leaves)[:-1]
         tree_str += "\nleaf_count=" + ("0 " * num_leaves)[:-1]
-        tree_str += "\ninternal_value=" + ("0.0 " * num_nodes)[:-1]
+        tree_str += "\ninternal_value=" + ("0 " * num_nodes)[:-1]
         tree_str += "\ninternal_weight=" + ("0 " * num_nodes)[:-1]
         tree_str += "\ninternal_count=" + ("0 " * num_nodes)[:-1]
         tree_str += f"\nis_linear={tree['is_linear']}"
