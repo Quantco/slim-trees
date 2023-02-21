@@ -70,6 +70,10 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
         return feat_name, values_str.split(" ")
 
     front_str = re.findall(FRONT_STRING_REGEX, model_string)[0]
+    # delete tree_sizes line since this messes up the tree parsing by LightGBM if not set correctly
+    # todo calculate correct tree_sizes
+    front_str = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str)
+
     back_str = re.findall(BACK_STRING_REGEX, model_string)[0]
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
     trees: List[dict] = []
@@ -96,7 +100,6 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
         assert len(feats_map["is_linear"]) == 1
         assert len(feats_map["shrinkage"]) == 1
 
-        # TODO (easy): feature transformation: do it + do it somewhat more readable with wrappers
         trees.append(
             {
                 "num_leaves": int(feats_map["num_leaves"][0]),
@@ -185,7 +188,4 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
 
         handle += tree_str
     handle += back_str
-    # print handle to txt
-    with open("out/great_lakes_compressed.model", "w") as f:
-        f.write(handle)
     return handle

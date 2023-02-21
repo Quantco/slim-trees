@@ -1,15 +1,18 @@
 import pathlib
+import tempfile
 from typing import Union
 
 import lightgbm as lgb
 from lgbm_booster import dump_lgbm
 from lightgbm import Booster
+from pickling import load_compressed
 
 from examples.utils import load_data, print_model_size
+from pickle_compression import dump_lgbm_compressed
 
 
 def train_model() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(n_estimators=1, random_state=42)
+    regressor = lgb.LGBMRegressor(n_estimators=5000, random_state=42)
     regressor.fit(*load_data())
     return regressor
 
@@ -23,16 +26,20 @@ def dump_model_string(booster: Booster, path: Union[str, pathlib.Path]):
         f.write(booster.model_to_string())
 
 
+# model = load_model("lgb1-base.model")
 model = train_model()
-# dump_model_string(model.booster_, "great_lakes_1.model")
 
-# x, y = load_data()
-# model = load_model("great_lakes_1.model")
-# model_new = load_model("great_lakes_1_omit_values.model")
+with tempfile.TemporaryDirectory() as tmpdir:
+    path = pathlib.Path(tmpdir) / "model.pkl"
+    dump_lgbm_compressed(model, path, "no")
+    model_compressed = load_compressed(path, "no")
 
-# y_pred = model.predict(x)
-# y_pred_new = model_new.predict(x)
-# diff = y_pred - y_pred_new
-# print(diff.max(), diff.min(), diff.mean(), diff.std())
+dump_model_string(model_compressed.booster_, "out/great_lakes_compressed.model")
+
+x, y = load_data()
+y_pred = model.predict(x)
+y_pred_new = model_compressed.predict(x)
+diff = y_pred - y_pred_new
+print(diff.max(), diff.min(), diff.mean(), diff.std())
 
 print_model_size(model, dump_lgbm)
