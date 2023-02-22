@@ -15,7 +15,7 @@ def lgbm_regressor(rng):
 
 
 def test_compresed_predictions(diabetes_toy_df, lgbm_regressor, tmp_path):
-    X, y = diabetes_toy_df  # noqa: N806
+    X, y = diabetes_toy_df
     lgbm_regressor.fit(X, y)
 
     model_path = tmp_path / "model_compressed.pickle.lzma"
@@ -27,7 +27,7 @@ def test_compresed_predictions(diabetes_toy_df, lgbm_regressor, tmp_path):
 
 
 def test_compressed_size(diabetes_toy_df, lgbm_regressor, tmp_path):
-    X, y = diabetes_toy_df  # noqa: N806
+    X, y = diabetes_toy_df
     lgbm_regressor.fit(X, y)
 
     model_path_compressed = tmp_path / "model_compressed.pickle.lzma"
@@ -41,7 +41,7 @@ def test_compressed_size(diabetes_toy_df, lgbm_regressor, tmp_path):
 
 @pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
 def test_dump_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_method):
-    X, y = diabetes_toy_df  # noqa: N806
+    X, y = diabetes_toy_df
     lgbm_regressor.fit(X, y)
     factor = 7 if compression_method == "no" else 4
 
@@ -53,7 +53,7 @@ def test_dump_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_metho
 
 @pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
 def test_load_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_method):
-    X, y = diabetes_toy_df  # noqa: N806
+    X, y = diabetes_toy_df
     lgbm_regressor.fit(X, y)
 
     load_time_compressed, load_time_uncompressed = get_load_times(

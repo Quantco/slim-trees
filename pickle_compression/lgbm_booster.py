@@ -61,9 +61,9 @@ def _decompress_booster_state(compressed_state: dict):
 def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     if not model_string.startswith("tree\nversion=v3"):
         raise ValueError("Only v3 is supported for the booster string format.")
-    FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"  # noqa: N806
-    BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"  # noqa: N806
-    TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"  # noqa: N806
+    FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
+    BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
+    TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
 
     def _extract_feature(feature_line):
         feat_name, values_str = feature_line.split("=")

@@ -15,7 +15,7 @@ from pickle_compression.pickling import load_compressed
 
 def train_model() -> RandomForestRegressor:
     regressor = RandomForestRegressor(n_estimators=100, random_state=42)
-    X_train, _, y_train, _ = generate_dataset(n_samples=10000)  # noqa: N806
+    X_train, _, y_train, _ = generate_dataset(n_samples=10000)
     regressor.fit(X_train, y_train)
     return regressor
 
