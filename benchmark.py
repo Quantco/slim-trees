@@ -5,7 +5,6 @@ import time
 from typing import Callable, List
 
 import lightgbm as lgb
-import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
 from examples.utils import generate_dataset
@@ -13,18 +12,14 @@ from pickle_compression.lgbm_booster import dump_lgbm
 from pickle_compression.sklearn_tree import dump_sklearn
 
 
-def rng():
-    return np.random.RandomState(42)
-
-
 def train_model_sklearn() -> RandomForestRegressor:
-    regressor = RandomForestRegressor(n_estimators=100, random_state=rng())
+    regressor = RandomForestRegressor(n_estimators=100, random_state=42)
     regressor.fit(*generate_dataset(n_samples=10000))
     return regressor
 
 
 def train_gbdt_lgbm() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=rng())
+    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=42)
     regressor.fit(*generate_dataset(n_samples=10000))
     return regressor
 
@@ -34,7 +29,7 @@ def train_rf_lgbm() -> lgb.LGBMRegressor:
         boosting_type="rf",
         n_estimators=100,
         num_leaves=1000,
-        random_state=rng(),
+        random_state=42,
         bagging_freq=5,
         bagging_fraction=0.5,
     )
@@ -99,8 +94,9 @@ def format_change(multiple: float) -> str:
 
 
 def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
-    header = """| Model | Size | Dump Time | Load Time |
-    |--|--:|--:|--:|
+    header = """
+        | Model | Size | Dump Time | Load Time |
+        |--|--:|--:|--:|
     """
 
     def format_row(results):
