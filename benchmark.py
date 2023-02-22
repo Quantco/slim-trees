@@ -111,13 +111,13 @@ def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
                 format_change(results["change"]["size"]),
             ),
             format_cell(
-                format_size(results["baseline"]["dump_time"]),
-                format_size(results["ours"]["dump_time"]),
+                format_time(results["baseline"]["dump_time"]),
+                format_time(results["ours"]["dump_time"]),
                 format_change(results["change"]["dump_time"]),
             ),
             format_cell(
-                format_size(results["baseline"]["load_time"]),
-                format_size(results["ours"]["load_time"]),
+                format_time(results["baseline"]["load_time"]),
+                format_time(results["ours"]["load_time"]),
                 format_change(results["change"]["load_time"]),
             ),
         ]
