@@ -91,10 +91,10 @@ def format_change(multiple: float) -> str:
 
 
 def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
-    header = """
-        | Model | Baseline Size | Our Size | Size Reduction | Baseline Loading Time | Our Loading Time | Slowdown |
-        |--|--:|--:|--:|--:|--:|--:|
-    """
+    header = (
+        "| Model | Baseline Size | Our Size | Size Reduction | Baseline Loading Time | "
+        "Our Loading Time | Slowdown |\n|--|--:|--:|--:|--:|--:|--:|"
+    )
 
     def format_row(results):
         column_data = [
