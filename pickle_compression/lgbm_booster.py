@@ -69,12 +69,18 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
         feat_name, values_str = feature_line.split("=")
         return feat_name, values_str.split(" ")
 
-    front_str = re.findall(FRONT_STRING_REGEX, model_string)[0]
+    front_str_match = re.search(FRONT_STRING_REGEX, model_string)
+    if front_str_match is None:
+        raise ValueError("Could not find front string.")
+    front_str = front_str_match.group()
     # delete tree_sizes line since this messes up the tree parsing by LightGBM if not set correctly
     # todo calculate correct tree_sizes
     front_str = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str)
 
-    back_str = re.findall(BACK_STRING_REGEX, model_string)[0]
+    back_str_match = re.search(BACK_STRING_REGEX, model_string)
+    if back_str_match is None:
+        raise ValueError("Could not find back string.")
+    back_str = back_str_match.group()
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
     trees: List[dict] = []
     for i, tree_match in enumerate(tree_matches):

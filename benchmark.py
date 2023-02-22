@@ -53,9 +53,13 @@ def benchmark(func: Callable, *args, **kwargs) -> float:
 
 def benchmark_model(name, train_func, dump_func) -> dict:
     model = train_func()
+
+    naive_dump_time = benchmark(pickle.dumps, model)
     naive_pickled = pickle.dumps(model)
     naive_pickled_size = len(naive_pickled)
     naive_load_time = benchmark(pickle.loads, naive_pickled)
+
+    our_dump_time = benchmark(dump_func, model, io.BytesIO())
     our_pickled_buf = io.BytesIO()
     dump_func(model, our_pickled_buf)
     our_pickled = our_pickled_buf.getvalue()
@@ -65,11 +69,17 @@ def benchmark_model(name, train_func, dump_func) -> dict:
         "name": name,
         "baseline": {
             "size": naive_pickled_size,
+            "dump_time": naive_dump_time,
             "load_time": naive_load_time,
         },
-        "ours": {"size": our_pickled_size, "load_time": our_load_time},
+        "ours": {
+            "size": our_pickled_size,
+            "dump_time": our_dump_time,
+            "load_time": our_load_time,
+        },
         "change": {
             "size": naive_pickled_size / our_pickled_size,
+            "dump_time": our_dump_time / naive_dump_time,
             "load_time": our_load_time / naive_load_time,
         },
     }
@@ -81,17 +91,18 @@ def format_size(n_bytes: int) -> str:
 
 
 def format_time(seconds: float) -> str:
-    return f"{seconds:.1f} s"
+    return f"{seconds:.2f} s"
 
 
 def format_change(multiple: float) -> str:
-    return f"{multiple:.1f} x"
+    return f"{multiple:.2f} x"
 
 
 def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
     header = (
-        "| Model | Baseline Size | Our Size | Size Reduction | Baseline Loading Time | "
-        "Our Loading Time | Slowdown |\n|--|--:|--:|--:|--:|--:|--:|\n"
+        "| Model | Baseline Size | Our Size | Size Reduction | Baseline Dump Time | Our Dump Time "
+        "| Dump Slowdown | Baseline Load Time | Our Load Time | Loading Slowdown |\n"
+        "|--|--:|--:|--:|--:|--:|--:|--:|--:|--:|\n"
     )
 
     def format_row(results):
@@ -100,6 +111,9 @@ def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
             format_size(results["baseline"]["size"]),
             format_size(results["ours"]["size"]),
             format_change(results["change"]["size"]),
+            format_time(results["baseline"]["dump_time"]),
+            format_time(results["ours"]["dump_time"]),
+            format_change(results["change"]["dump_time"]),
             format_time(results["baseline"]["load_time"]),
             format_time(results["ours"]["load_time"]),
             format_change(results["change"]["load_time"]),
@@ -113,9 +127,9 @@ def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
 
 if __name__ == "__main__":
     models_to_benchmark = [
-        ("sklearn `RandomForestRegressor`", train_model_sklearn, dump_sklearn),
-        ("lightgbm `LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
-        ("lightgbm `LGBMRegressor rf`", train_rf_lgbm, dump_lgbm),
+        ("`RandomForestRegressor`", train_model_sklearn, dump_sklearn),
+        ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
+        ("`LGBMRegressor rf`", train_rf_lgbm, dump_lgbm),
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
     print(format_benchmarks_results_table(benchmark_results))
