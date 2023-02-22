@@ -135,4 +135,5 @@ if __name__ == "__main__":
         ("`LGBMRegressor rf`", train_rf_lgbm, dump_lgbm),
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
+    print("Base results (pickle) / Our results / Change (ours / base)")
     print(format_benchmarks_results_table(benchmark_results))
