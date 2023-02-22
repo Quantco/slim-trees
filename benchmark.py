@@ -99,26 +99,33 @@ def format_change(multiple: float) -> str:
 
 
 def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
-    header = (
-        "| Model | Baseline Size | Our Size | Size Reduction | Baseline Dump Time | Our Dump Time "
-        "| Dump Slowdown | Baseline Load Time | Our Load Time | Loading Slowdown |\n"
-        "|--|--:|--:|--:|--:|--:|--:|--:|--:|--:|\n"
-    )
+    header = """| Model | Size | Dump Time | Load Time |
+    |--|--:|--:|--:|
+    """
 
     def format_row(results):
+        def format_cell(base, ours, change):
+            return f"{base} / {ours} / {change}"
+
         column_data = [
             results["name"],
-            format_size(results["baseline"]["size"]),
-            format_size(results["ours"]["size"]),
-            format_change(results["change"]["size"]),
-            format_time(results["baseline"]["dump_time"]),
-            format_time(results["ours"]["dump_time"]),
-            format_change(results["change"]["dump_time"]),
-            format_time(results["baseline"]["load_time"]),
-            format_time(results["ours"]["load_time"]),
-            format_change(results["change"]["load_time"]),
+            format_cell(
+                format_size(results["baseline"]["size"]),
+                format_size(results["ours"]["size"]),
+                format_change(results["change"]["size"]),
+            ),
+            format_cell(
+                format_size(results["baseline"]["dump_time"]),
+                format_size(results["ours"]["dump_time"]),
+                format_change(results["change"]["dump_time"]),
+            ),
+            format_cell(
+                format_size(results["baseline"]["load_time"]),
+                format_size(results["ours"]["load_time"]),
+                format_change(results["change"]["load_time"]),
+            ),
         ]
-        return " | ".join(map(str, column_data))
+        return " | ".join(column_data)
 
     formatted_rows = map(format_row, benchmark_results)
 
