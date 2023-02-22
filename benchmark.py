@@ -18,18 +18,18 @@ def rng():
 
 
 def train_model_sklearn() -> RandomForestRegressor:
-    regressor = RandomForestRegressor(
-        n_estimators=100, random_state=rng(), max_leaf_nodes=200
-    )
-    X_train, X_test, y_train, y_test = generate_dataset()
-    regressor.fit(X_train, y_train)
-    print("sklearn score", regressor.score(X_test, y_test))
+    regressor = RandomForestRegressor(n_estimators=100, random_state=rng())
+    regressor.fit(*generate_dataset(n_samples=10000))
     return regressor
 
 
-# def train_model_lgbm() -> lgb.LGBMRegressor:
-def train_model_lgbm():
-    # regressor = lgb.LGBMRegressor(n_estimators=100, random_state=rng())
+def train_gbdt_lgbm() -> lgb.LGBMRegressor:
+    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=rng())
+    regressor.fit(*generate_dataset(n_samples=10000))
+    return regressor
+
+
+def train_rf_lgbm() -> lgb.LGBMRegressor:
     regressor = lgb.LGBMRegressor(
         boosting_type="rf",
         n_estimators=100,
@@ -38,9 +38,7 @@ def train_model_lgbm():
         bagging_freq=5,
         bagging_fraction=0.5,
     )
-    X_train, X_test, y_train, y_test = generate_dataset()
-    regressor.fit(X_train, y_train)
-    print("lgbm score", regressor.score(X_test, y_test))
+    regressor.fit(*generate_dataset(n_samples=10000))
     return regressor
 
 
@@ -79,7 +77,7 @@ def benchmark_model(name, train_func, dump_func) -> dict:
 
 def format_size(n_bytes: int) -> str:
     MiB = 1024**2
-    return f"{n_bytes/MiB:.1f} MiB"
+    return f"{n_bytes / MiB:.1f} MiB"
 
 
 def format_time(seconds: float) -> str:
@@ -93,7 +91,7 @@ def format_change(multiple: float) -> str:
 def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
     header = (
         "| Model | Baseline Size | Our Size | Size Reduction | Baseline Loading Time | "
-        "Our Loading Time | Slowdown |\n|--|--:|--:|--:|--:|--:|--:|"
+        "Our Loading Time | Slowdown |\n|--|--:|--:|--:|--:|--:|--:|\n"
     )
 
     def format_row(results):
@@ -116,7 +114,8 @@ def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
 if __name__ == "__main__":
     models_to_benchmark = [
         ("sklearn `RandomForestRegressor`", train_model_sklearn, dump_sklearn),
-        ("lightgbm `LGBMRegressor`", train_model_lgbm, dump_lgbm),
+        ("lightgbm `LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
+        ("lightgbm `LGBMRegressor rf`", train_rf_lgbm, dump_lgbm),
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
     print(format_benchmarks_results_table(benchmark_results))

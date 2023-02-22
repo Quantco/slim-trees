@@ -15,8 +15,8 @@ from pickle_compression.pickling import load_compressed
 
 def train_model() -> RandomForestRegressor:
     regressor = RandomForestRegressor(n_estimators=100, random_state=42)
-    X_train, _, y_train, _ = generate_dataset(n_samples=10000)
-    regressor.fit(X_train, y_train)
+    X, y = generate_dataset(n_samples=10000)
+    regressor.fit(X, y)
     return regressor
 
 
@@ -29,6 +29,6 @@ if __name__ == "__main__":
         model_compressed = load_compressed(path, "no")
 
     evaluate_prediction_difference(
-        model, model_compressed, generate_dataset(n_samples=10000)[1]
+        model, model_compressed, generate_dataset(n_samples=10000)[0]
     )
     evaluate_compression_performance(model, dump_sklearn)

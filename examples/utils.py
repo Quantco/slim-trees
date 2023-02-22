@@ -14,16 +14,14 @@ from pickle_compression.pickling import dump_compressed, load_compressed
 
 def generate_dataset(
     n_samples: int = 50000, n_features: int = 100
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Generate a dataset with 50000 samples and 100 features.
 
     Returns:
-        X_train (np.array): (0.8 * n_samples) x n_features
-        X_test (np.array): (0.2 * n_samples) x n_features
-        y_train (np.array): 0.8 * n_samples
-        y_test (np.array): 0.2 * n_samples
+        X (np.array): n_samples x n_features
+        y (np.array): n_samples
     """
-    X, y = make_regression(  # noqa: N806
+    X, y = make_regression(
         n_samples=n_samples,
         n_features=n_features,
         n_informative=50,
@@ -36,7 +34,22 @@ def generate_dataset(
     for i in range(0, 100, 10):
         X[:, i] = X[:, i].astype("int")
 
-    X_train, X_test, y_train, y_test = train_test_split(  # noqa: N806
+    return X, y
+
+
+def generate_dataset_train_test(
+    n_samples: int = 50000, n_features: int = 100
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Generate a dataset with 50000 samples and 100 features.
+
+    Returns:
+        X_train (np.array): (0.8 * n_samples) x n_features
+        X_test (np.array): (0.2 * n_samples) x n_features
+        y_train (np.array): 0.8 * n_samples
+        y_test (np.array): 0.2 * n_samples
+    """
+    X, y = generate_dataset(n_samples, n_features)
+    X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
     return X_train, X_test, y_train, y_test
