@@ -58,64 +58,68 @@ def _decompress_booster_state(compressed_state: dict):
     return state
 
 
-def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
-    if not model_string.startswith("tree\nversion=v3"):
-        raise ValueError("Only v3 is supported for the booster string format.")
-    FRONT_STRING_REGEX = r"(?:tree\n)(?:\w+=.*\n)*\n(?=Tree)"  # noqa: N806
-    BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"  # noqa: N806
-    TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"  # noqa: N806
-
+def _extract_tree(tree_idx, tree_match: tuple[str]) -> dict:
     def _extract_feature(feature_line):
         feat_name, values_str = feature_line.split("=")
         return feat_name, values_str.split(" ")
 
+    split_feature_dtype = np.int16
+    threshold_dtype = np.float64
+    decision_type_dtype = np.int8
+    left_child_dtype = np.int16
+    right_child_dtype = left_child_dtype
+    leaf_value_dtype = np.float64
+
+    tree_name, features_list = tree_match
+    _, tree_idx = tree_name.replace("\n", "").split("=")
+    assert int(tree_idx) == i
+
+    # extract features -- filter out empty ones
+    features = [f for f in features_list.split("\n") if "=" in f]
+    feats_map = dict(_extract_feature(fl) for fl in features)
+
+    def parse(str_list, dtype):
+        return np.array(str_list, dtype=dtype)
+
+    assert len(feats_map["num_leaves"]) == 1
+    assert len(feats_map["num_cat"]) == 1
+    assert len(feats_map["is_linear"]) == 1
+    assert len(feats_map["shrinkage"]) == 1
+
+    return {
+        "num_leaves": int(feats_map["num_leaves"][0]),
+        "num_cat": int(feats_map["num_cat"][0]),
+        "split_feature": parse(feats_map["split_feature"], split_feature_dtype),
+        "threshold": compress_half_int_float_array(
+            parse(feats_map["threshold"], threshold_dtype)
+        ),
+        "decision_type": parse(feats_map["decision_type"], decision_type_dtype),
+        "left_child": parse(feats_map["left_child"], left_child_dtype),
+        "right_child": parse(feats_map["right_child"], right_child_dtype),
+        "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype),
+        "is_linear": int(feats_map["is_linear"][0]),
+        "shrinkage": float(feats_map["shrinkage"][0]),
+    }
+
+
+def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
+    if not model_string.startswith("tree\nversion=v3"):
+        raise ValueError("Only v3 is supported for the booster string format.")
+
+    FRONT_STRING_REGEX = r"(?:tree\n)(?:\w+=.*\n)*\n(?=Tree)"  # noqa: N806
+    BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"  # noqa: N806
+    TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"  # noqa: N806
+
     front_str = re.findall(FRONT_STRING_REGEX, model_string)[0]
     # delete tree_sizes line since this messes up the tree parsing by LightGBM if not set correctly
-    # todo calculate correct tree_sizes
+    # TODO: calculate correct tree_sizes
     front_str = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str)
 
     back_str = re.findall(BACK_STRING_REGEX, model_string)[0]
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
-    trees: List[dict] = []
-    for i, tree_match in enumerate(tree_matches):
-        tree_name, features_list = tree_match
-        _, tree_idx = tree_name.replace("\n", "").split("=")
-        assert int(tree_idx) == i
 
-        # extract features -- filter out empty ones
-        features = [f for f in features_list.split("\n") if "=" in f]
-        feats_map = dict(_extract_feature(fl) for fl in features)
+    trees = [_extract_tree(i,t) for i, t in enumerate(tree_matches)]
 
-        def parse(str_list, dtype):
-            return np.array(str_list, dtype=dtype)
-
-        split_feature_dtype = np.int16
-        threshold_dtype = np.float64
-        decision_type_dtype = np.int8
-        left_child_dtype = np.int16
-        right_child_dtype = left_child_dtype
-        leaf_value_dtype = np.float64
-        assert len(feats_map["num_leaves"]) == 1
-        assert len(feats_map["num_cat"]) == 1
-        assert len(feats_map["is_linear"]) == 1
-        assert len(feats_map["shrinkage"]) == 1
-
-        trees.append(
-            {
-                "num_leaves": int(feats_map["num_leaves"][0]),
-                "num_cat": int(feats_map["num_cat"][0]),
-                "split_feature": parse(feats_map["split_feature"], split_feature_dtype),
-                "threshold": compress_half_int_float_array(
-                    parse(feats_map["threshold"], threshold_dtype)
-                ),
-                "decision_type": parse(feats_map["decision_type"], decision_type_dtype),
-                "left_child": parse(feats_map["left_child"], left_child_dtype),
-                "right_child": parse(feats_map["right_child"], right_child_dtype),
-                "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype),
-                "is_linear": int(feats_map["is_linear"][0]),
-                "shrinkage": float(feats_map["shrinkage"][0]),
-            }
-        )
     return front_str, trees, back_str
 
 
