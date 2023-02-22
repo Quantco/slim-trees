@@ -36,11 +36,12 @@ if __name__ == "__main__":
     model = train_model()
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        path = pathlib.Path(tmpdir) / "model.pkl"
-        dump_lgbm_compressed(model, path, "no")
-        model_compressed = load_compressed(path, "no")
+        dump_path = pathlib.Path(tmpdir) / "model.pkl"
+        dump_lgbm_compressed(model, dump_path, "no")
+        model_compressed = load_compressed(dump_path, "no")
 
     pathlib.Path("examples/out").mkdir(exist_ok=True)
+    dump_model_string(model.booster_, "examples/out/model_uncompressed.model")
     dump_model_string(model_compressed.booster_, "examples/out/model_compressed.model")
 
     evaluate_prediction_difference(
