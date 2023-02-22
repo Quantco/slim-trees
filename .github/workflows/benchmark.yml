@@ -1,0 +1,26 @@
+on: pull_request
+
+jobs:
+  example_comment_pr:
+    runs-on: ubuntu-latest
+    name: Benchmark
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up conda env
+        uses: mamba-org/provision-with-micromamba@v15
+        with:
+          cache-env: true
+          extra-specs: |
+            python=3.11
+      - name: Install repository
+        run: python -m pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
+      - name: Run benchmark
+        shell: bash -el {0}
+        run: |
+          echo "_(benchmark **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_" >> benchmark.md
+          python benchmark.py >> benchmark.md
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          filePath: benchmark.md
+          comment_tag: benchmark
