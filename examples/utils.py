@@ -4,27 +4,42 @@ import time
 from itertools import product
 from typing import Any, Callable, Tuple
 
+import numpy as np
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
 
 from pickle_compression.pickling import dump_compressed, load_compressed
 
 
-def load_data() -> Tuple[pd.DataFrame, pd.Series]:
-    df = pd.read_csv("examples/great_lakes_1.csv")
-    df.drop(["lat", "long"], axis=1, inplace=True)
-    cols = ["region", "type", "laundry_options", "parking_options"]
-    label_encoder = LabelEncoder()
-    mapping_dict = {}
-    for col in cols:
-        df[col] = label_encoder.fit_transform(df[col])
-        le_name_mapping = dict(
-            zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_))
-        )
-        mapping_dict[col] = le_name_mapping
-    X = df.drop("price", axis=1)  # noqa: N806
-    y = df["price"]
-    return X, y
+def generate_dataset(
+    n_samples: int = 50000, n_features: int = 100
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Generate a dataset with 50000 samples and 100 features.
+
+    Returns:
+        X_train (np.array): (0.8 * n_samples) x n_features
+        X_test (np.array): (0.2 * n_samples) x n_features
+        y_train (np.array): 0.8 * n_samples
+        y_test (np.array): 0.2 * n_samples
+    """
+    X, y = make_regression(  # noqa: N806
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=50,
+        n_targets=1,
+        shuffle=True,
+        random_state=42,
+    )
+
+    # make some columns categorical
+    for i in range(0, 100, 10):
+        X[:, i] = X[:, i].astype("int")
+
+    X_train, X_test, y_train, y_test = train_test_split(  # noqa: N806
+        X, y, test_size=0.2, random_state=42
+    )
+    return X_train, X_test, y_train, y_test
 
 
 def evaluate_compression_performance(
@@ -55,3 +70,17 @@ def evaluate_compression_performance(
     if print_performance:
         print(df.to_string(index=False))
     return df
+
+
+def evaluate_prediction_difference(
+    model: Any, model_compressed: Any, x: np.ndarray, print_performance: bool = True
+) -> np.ndarray:
+    y_pred = model.predict(x)
+    y_pred_new = model_compressed.predict(x)
+    diff = np.abs(y_pred - y_pred_new)
+    if print_performance:
+        print("Prediction difference:")
+        print(f"Max: {diff.max()}")
+        print(f"Avg: {diff.mean()}")
+        print(f"Std: {diff.std()}")
+    return diff
