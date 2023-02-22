@@ -58,7 +58,7 @@ def _decompress_booster_state(compressed_state: dict):
     return state
 
 
-def _extract_tree(tree_idx, tree_match: tuple[str]) -> dict:
+def _extract_tree(i: int, tree_match: tuple) -> dict:
     def _extract_feature(feature_line):
         feat_name, values_str = feature_line.split("=")
         return feat_name, values_str.split(" ")
@@ -70,7 +70,7 @@ def _extract_tree(tree_idx, tree_match: tuple[str]) -> dict:
     right_child_dtype = left_child_dtype
     leaf_value_dtype = np.float64
 
-    tree_name, features_list = tree_match
+    tree_name, features_list = tree_match  # type: ignore
     _, tree_idx = tree_name.replace("\n", "").split("=")
     assert int(tree_idx) == i
 
@@ -118,7 +118,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     back_str = re.findall(BACK_STRING_REGEX, model_string)[0]
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
 
-    trees = [_extract_tree(i,t) for i, t in enumerate(tree_matches)]
+    trees = [_extract_tree(i, t) for i, t in enumerate(tree_matches)]
 
     return front_str, trees, back_str
 
