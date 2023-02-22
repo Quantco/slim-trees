@@ -8,7 +8,7 @@ import lightgbm as lgb
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
-from examples.generate_data import generate_dataset
+from examples.utils import generate_dataset
 from pickle_compression.lgbm_booster import dump_lgbm
 from pickle_compression.sklearn_tree import dump_sklearn
 
@@ -33,7 +33,7 @@ def train_model_lgbm():
     regressor = lgb.LGBMRegressor(
         boosting_type="rf",
         n_estimators=100,
-        num_leaves=6300,
+        num_leaves=1000,
         random_state=rng(),
         bagging_freq=5,
         bagging_fraction=0.5,
