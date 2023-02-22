@@ -56,12 +56,46 @@ def df_from_model_string(model_str: str, transform_values=False) -> pd.DataFrame
     return pd.DataFrame(res)
 
 
+def get_type(s:str):
+    if s.isdigit():
+        return int
+    elif s.isdecimal():
+        return float
+    else:
+        return str
+
+
 if __name__ == "__main__":
     # df = df_from_model_string(open("test_model_string.model", "r").read())
-    df = df_from_model_string(open("lgb1.txt", "r").read())
+    df = df_from_model_string(open("private_/lgb1.txt", "r").read())
     # TODO: cannot be interpreted directly by parquet (pyarrow & fastparquet) as of now.
     # dfo = df_from_model_string(open("lgb1.txt", "r").read(), transform_values=True)
     print(df.head(50))
-    df.to_parquet("lgb1.parquet")
-    table: pa.Table = pa.Table.from_pandas(df)
-    pq.write_table(table, "lgb1.parquet.lz4", compression="lz4")
+
+
+    df = df.convert_dtypes(infer_objects=True)
+    for col in df.columns:
+        try:
+            df[col] = pd.to_numeric(df[col])
+        except:
+            pass
+
+    df.to_parquet("private_/lgb1_conv.parquet")
+    table: pa.Table = pa.Table.from_pandas(df).drop(['node_idx'])
+    target_schema = pa.schema([
+        pa.field('tree_idx', pa.int16()),
+        pa.field('split_feature', pa.int16()),
+        pa.field('split_gain', pa.float64()),
+        pa.field('threshold', pa.float64()),
+        pa.field('decision_type', pa.int8()),
+        pa.field('left_child', pa.int8()),
+        pa.field('right_child', pa.int8()),
+        pa.field('leaf_value', pa.float64()),
+        pa.field('leaf_weight', pa.float64()),
+        pa.field('leaf_count', pa.int32()),
+        pa.field('internal_value', pa.float64()),
+        pa.field('internal_weight', pa.float64()),
+        pa.field('internal_count', pa.int32()),
+    ])
+    table_enc = pa.Table.from_arrays([*table], schema=target_schema)
+    pq.write_table(table_enc, "lgb1.parquet.lz4", compression="lz4")
