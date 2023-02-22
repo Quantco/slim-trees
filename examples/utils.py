@@ -49,10 +49,7 @@ def generate_dataset_train_test(
         y_test (np.array): 0.2 * n_samples
     """
     X, y = generate_dataset(n_samples, n_features)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-    return X_train, X_test, y_train, y_test
+    return train_test_split(X, y, test_size=0.2, random_state=42)
 
 
 def evaluate_compression_performance(
