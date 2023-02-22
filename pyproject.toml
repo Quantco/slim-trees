@@ -46,6 +46,10 @@ select = [
     # pyupgrade
     "UP"
 ]
+ignore = [
+    # variable in function should be lowercase
+    "N806",
+]
 
 [tool.mypy]
 python_version = "3.8"

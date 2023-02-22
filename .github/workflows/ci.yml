@@ -24,9 +24,8 @@ jobs:
       matrix:
         PYTHON_VERSION: ['3.8', '3.9', '3.10', '3.11']
     steps:
-      - name: Checkout branch
-        uses: actions/checkout@v3
-      - name: Set up Conda env
+      - uses: actions/checkout@v3
+      - name: Set up conda env
         uses: mamba-org/provision-with-micromamba@v15
         with:
           cache-env: true

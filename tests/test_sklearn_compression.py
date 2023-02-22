@@ -26,7 +26,7 @@ def decision_tree_regressor(rng):
 
 
 def test_compressed_predictions(diabetes_toy_df, random_forest_regressor, tmp_path):
-    X, y = diabetes_toy_df  # noqa: N806
+    X, y = diabetes_toy_df
     random_forest_regressor.fit(X, y)
 
     model_path = tmp_path / "model_compressed.pickle.lzma"
@@ -40,7 +40,7 @@ def test_compressed_predictions(diabetes_toy_df, random_forest_regressor, tmp_pa
 def test_compressed_internal_structure(
     diabetes_toy_df, decision_tree_regressor, tmp_path
 ):
-    X, y = diabetes_toy_df  # noqa: N806
+    X, y = diabetes_toy_df
     decision_tree_regressor.fit(X, y)
 
     model_path = tmp_path / "model_dtype_reduction.pickle.lzma"
@@ -70,7 +70,7 @@ def test_compressed_internal_structure(
 
 
 def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):
-    X, y = diabetes_toy_df  # noqa: N806
+    X, y = diabetes_toy_df
     random_forest_regressor.fit(X, y)
 
     model_path_dtype_reduction = tmp_path / "model_dtype_reduction.pickle.lzma"
@@ -86,7 +86,7 @@ def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):
 def test_dump_times(
     diabetes_toy_df, random_forest_regressor, tmp_path, compression_method
 ):
-    X, y = diabetes_toy_df  # noqa: N806
+    X, y = diabetes_toy_df
     random_forest_regressor.fit(X, y)
     factor = 4 if compression_method == "no" else 1.5
 
@@ -100,7 +100,7 @@ def test_dump_times(
 def test_load_times(
     diabetes_toy_df, random_forest_regressor, tmp_path, compression_method
 ):
-    X, y = diabetes_toy_df  # noqa: N806
+    X, y = diabetes_toy_df
     random_forest_regressor.fit(X, y)
 
     load_time_compressed, load_time_uncompressed = get_load_times(
