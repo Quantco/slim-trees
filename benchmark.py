@@ -5,22 +5,42 @@ import time
 from typing import Callable, List
 
 import lightgbm as lgb
+import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
-from examples.utils import load_data
+from examples.generate_data import generate_dataset
 from pickle_compression.lgbm_booster import dump_lgbm
 from pickle_compression.sklearn_tree import dump_sklearn
 
 
+def rng():
+    return np.random.RandomState(42)
+
+
 def train_model_sklearn() -> RandomForestRegressor:
-    regressor = RandomForestRegressor(n_estimators=100, random_state=42)
-    regressor.fit(*load_data())
+    regressor = RandomForestRegressor(
+        n_estimators=100, random_state=rng(), max_leaf_nodes=200
+    )
+    X_train, X_test, y_train, y_test = generate_dataset()
+    regressor.fit(X_train, y_train)
+    print("sklearn score", regressor.score(X_test, y_test))
     return regressor
 
 
-def train_model_lgbm() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=42)
-    regressor.fit(*load_data())
+# def train_model_lgbm() -> lgb.LGBMRegressor:
+def train_model_lgbm():
+    # regressor = lgb.LGBMRegressor(n_estimators=100, random_state=rng())
+    regressor = lgb.LGBMRegressor(
+        boosting_type="rf",
+        n_estimators=100,
+        num_leaves=6300,
+        random_state=rng(),
+        bagging_freq=5,
+        bagging_fraction=0.5,
+    )
+    X_train, X_test, y_train, y_test = generate_dataset()
+    regressor.fit(X_train, y_train)
+    print("lgbm score", regressor.score(X_test, y_test))
     return regressor
 
 
@@ -71,7 +91,7 @@ def format_change(multiple: float) -> str:
 
 
 def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
-    header = f"""
+    header = """
         | Model | Baseline Size | Our Size | Size Reduction | Baseline Loading Time | Our Loading Time | Slowdown |
         |--|--:|--:|--:|--:|--:|--:|
     """
