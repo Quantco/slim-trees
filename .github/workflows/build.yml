@@ -1,5 +1,4 @@
 name: Build
-
 on: push
 
 jobs:
@@ -18,7 +17,7 @@ jobs:
           name: artifact
           path: dist/*
 
-  upload-testpypi:
+  upload-pypi:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: [build]
     runs-on: ubuntu-latest
