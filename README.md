@@ -1,6 +1,9 @@
 # pickle_compression
 
 [![CI](https://github.com/pavelzw/pickle-compression/actions/workflows/ci.yml/badge.svg)](https://github.com/pavelzw/pickle-compression/actions/workflows/ci.yml)
+[![conda-forge](https://img.shields.io/conda/vn/conda-forge/pickle-compression?logoColor=white&logo=conda-forge)](https://anaconda.org/conda-forge/pickle-compression)
+[![pypi-version](https://img.shields.io/pypi/v/pickle-compression.svg?logo=pypi&logoColor=white)](https://pypi.org/project/pickle-comnpression)
+[![python-version](https://img.shields.io/pypi/pyversions/pickle-compression?logoColor=white&logo=python)](https://pypi.org/project/pickle-compression)
 
 A python package for efficient pickling.
 
