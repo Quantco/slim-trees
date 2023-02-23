@@ -16,7 +16,7 @@ from pickle_compression.pickling import load_compressed
 
 
 def train_model() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(n_estimators=5, random_state=42)
+    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=42)
     X, y = generate_dataset(n_samples=10000)
     regressor.fit(X, y)
     return regressor
@@ -34,6 +34,7 @@ def dump_model_string(booster: Booster, path: Union[str, pathlib.Path]):
 if __name__ == "__main__":
     # model = load_model("examples/lgb1-base.model")
     model = train_model()
+    dump_model_string(model.booster_, "examples/out/model_uncompressed.model")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         dump_path = pathlib.Path(tmpdir) / "model.pkl"
