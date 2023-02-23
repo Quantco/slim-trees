@@ -34,7 +34,6 @@ def dump_model_string(booster: Booster, path: Union[str, pathlib.Path]):
 if __name__ == "__main__":
     # model = load_model("examples/lgb1-base.model")
     model = train_model()
-    dump_model_string(model.booster_, "examples/out/model_uncompressed.model")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         dump_path = pathlib.Path(tmpdir) / "model.pkl"
