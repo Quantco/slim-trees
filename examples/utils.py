@@ -14,7 +14,7 @@ from pickle_compression.pickling import dump_compressed, load_compressed
 
 def generate_dataset(
     n_samples: int = 50000, n_features: int = 100
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[pd.DataFrame, pd.Series]:
     """Generate a dataset with 50000 samples and 100 features.
 
     Returns:
@@ -30,10 +30,16 @@ def generate_dataset(
         random_state=42,
     )
 
-    # make some columns categorical
-    for i in range(0, 100, 10):
-        X[:, i] = X[:, i].astype("int")
-
+    # make last columns categorical TODO: doesn't get recognized as categorical by lightgbm
+    # X = pd.DataFrame(
+    #     {
+    #         f"col_{i}": X[:, i]
+    #         if i < int(0.6 * n_features)
+    #         else pd.Series(np.abs(X[:, 0].astype("int64")), dtype="category")
+    #         for i in range(n_features)
+    #     }
+    # )
+    X = pd.DataFrame(X)
     return X, y
 
 
@@ -83,7 +89,7 @@ def evaluate_compression_performance(
 
 
 def evaluate_prediction_difference(
-    model: Any, model_compressed: Any, x: np.ndarray, print_performance: bool = True
+    model: Any, model_compressed: Any, x: pd.DataFrame, print_performance: bool = True
 ) -> np.ndarray:
     y_pred = model.predict(x)
     y_pred_new = model_compressed.predict(x)

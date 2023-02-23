@@ -5,11 +5,17 @@ import time
 from typing import Callable, List
 
 import lightgbm as lgb
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 from examples.utils import generate_dataset
 from pickle_compression.lgbm_booster import dump_lgbm
 from pickle_compression.sklearn_tree import dump_sklearn
+
+
+def train_gb_sklearn() -> GradientBoostingRegressor:
+    regressor = GradientBoostingRegressor(n_estimators=2000, random_state=42)
+    regressor.fit(*generate_dataset(n_samples=10000))
+    return regressor
 
 
 def train_model_sklearn() -> RandomForestRegressor:
@@ -19,7 +25,13 @@ def train_model_sklearn() -> RandomForestRegressor:
 
 
 def train_gbdt_lgbm() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=42)
+    regressor = lgb.LGBMRegressor(n_estimators=2000, random_state=42)
+    regressor.fit(*generate_dataset(n_samples=10000))
+    return regressor
+
+
+def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
+    regressor = lgb.LGBMRegressor(n_estimators=20000, random_state=42)
     regressor.fit(*generate_dataset(n_samples=10000))
     return regressor
 
@@ -131,7 +143,9 @@ def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
 if __name__ == "__main__":
     models_to_benchmark = [
         ("`RandomForestRegressor`", train_model_sklearn, dump_sklearn),
+        ("`GradientBoostingRegressor`", train_gb_sklearn, dump_sklearn),
         ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
+        ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
         ("`LGBMRegressor rf`", train_rf_lgbm, dump_lgbm),
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
