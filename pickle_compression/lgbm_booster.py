@@ -69,6 +69,60 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
         feat_name, values_str = feature_line.split("=")
         return feat_name, values_str.split(" ")
 
+    def parse(str_list, dtype):
+        return np.array(str_list, dtype=dtype)
+
+    def _extract_tree(tree_lines: list[str]) -> dict:
+        # features_list = "\n".join(tree_lines[1:])
+        features = [f for f in tree_lines[1:] if "=" in f]
+        feats_map = dict(_extract_feature(fl) for fl in features)
+
+        # TODO: why is this even here?
+        split_feature_dtype = np.int16
+        threshold_dtype = np.float64
+        decision_type_dtype = np.int8
+        left_child_dtype = np.int16
+        right_child_dtype = left_child_dtype
+        leaf_value_dtype = np.float64
+
+        assert len(feats_map["num_leaves"]) == 1
+        assert len(feats_map["num_cat"]) == 1
+        assert len(feats_map["is_linear"]) == 1
+        assert len(feats_map["shrinkage"]) == 1
+
+        return {
+            "num_leaves": int(feats_map["num_leaves"][0]),
+            "num_cat": int(feats_map["num_cat"][0]),
+            "split_feature": parse(feats_map["split_feature"], split_feature_dtype),
+            "threshold": compress_half_int_float_array(
+                parse(feats_map["threshold"], threshold_dtype)
+            ),
+            "decision_type": parse(feats_map["decision_type"], decision_type_dtype),
+            "left_child": parse(feats_map["left_child"], left_child_dtype),
+            "right_child": parse(feats_map["right_child"], right_child_dtype),
+            "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype),
+            "is_linear": int(feats_map["is_linear"][0]),
+            "shrinkage": float(feats_map["shrinkage"][0]),
+        }
+
+    model_lines = np.array(model_string.split("\n"))
+    front_str = "\n".join(model_lines[:9]) + "\n\n"
+    # ; front_str_alt = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str_alt)
+    back_str = ""
+    trees = []
+    idx = 11
+    while idx < len(model_lines):
+        line = model_lines[idx]
+        if line.startswith("Tree="):
+            trees.append(_extract_tree(model_lines[idx:idx + 18]))
+            idx += 19
+        elif line.startswith("end of trees"):
+            back_str = "\n".join(model_lines[idx:])
+            break  # finished, rest is back str
+        else:
+            idx += 1  # oops, something wrong
+
+    """
     front_str_match = re.search(FRONT_STRING_REGEX, model_string)
     if front_str_match is None:
         raise ValueError("Could not find front string.")
@@ -83,6 +137,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     back_str = back_str_match.group()
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
     trees: List[dict] = []
+    
     for i, tree_match in enumerate(tree_matches):
         tree_name, features_list = tree_match
         _, tree_idx = tree_name.replace("\n", "").split("=")
@@ -122,6 +177,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
                 "shrinkage": float(feats_map["shrinkage"][0]),
             }
         )
+    """
     return front_str, trees, back_str
 
 
