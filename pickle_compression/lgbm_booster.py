@@ -1,7 +1,6 @@
 import copyreg
 import os
 import pickle
-import re
 import sys
 from typing import Any, BinaryIO, List, Tuple
 
@@ -61,9 +60,6 @@ def _decompress_booster_state(compressed_state: dict):
 def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     if not model_string.startswith("tree\nversion=v3"):
         raise ValueError("Only v3 is supported for the booster string format.")
-    FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
-    BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
-    TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
 
     def _extract_feature(feature_line):
         feat_name, values_str = feature_line.split("=")
@@ -72,7 +68,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     def parse(str_list, dtype):
         return np.array(str_list, dtype=dtype)
 
-    def _extract_tree(tree_lines: list[str]) -> dict:
+    def _extract_tree(tree_lines) -> dict:
         # features_list = "\n".join(tree_lines[1:])
         features = [f for f in tree_lines[1:] if "=" in f]
         feats_map = dict(_extract_feature(fl) for fl in features)
@@ -114,7 +110,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     while idx < len(model_lines):
         line = model_lines[idx]
         if line.startswith("Tree="):
-            trees.append(_extract_tree(model_lines[idx:idx + 18]))
+            trees.append(_extract_tree(model_lines[idx : idx + 18]))
             idx += 19
         elif line.startswith("end of trees"):
             back_str = "\n".join(model_lines[idx:])
@@ -129,7 +125,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     front_str = front_str_match.group()
     # delete tree_sizes line since this messes up the tree parsing by LightGBM if not set correctly
     # todo calculate correct tree_sizes
-    front_str = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str)
+    front_str = re.sub(r"tree_sizes=(?:\\d+ )*\\d+\n", "", front_str)
 
     back_str_match = re.search(BACK_STRING_REGEX, model_string)
     if back_str_match is None:
@@ -137,7 +133,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     back_str = back_str_match.group()
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
     trees: List[dict] = []
-    
+
     for i, tree_match in enumerate(tree_matches):
         tree_name, features_list = tree_match
         _, tree_idx = tree_name.replace("\n", "").split("=")
