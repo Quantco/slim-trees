@@ -6,8 +6,8 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 from test_util import get_dump_times, get_load_times
 
-from pickle_compression import dump_sklearn_compressed
-from pickle_compression.pickling import dump_compressed, load_compressed
+from slim_trees import dump_sklearn_compressed
+from slim_trees.pickling import dump_compressed, load_compressed
 
 
 @pytest.fixture

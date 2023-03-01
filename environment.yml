@@ -1,4 +1,4 @@
-name: pickle_compression
+name: slim_trees
 channels:
   - conda-forge
   - nodefaults
@@ -11,3 +11,4 @@ dependencies:
   - scikit-learn
   - pytest
   - setuptools_scm
+  - tbump

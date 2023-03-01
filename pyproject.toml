@@ -1,5 +1,6 @@
 [build-system]
-requires = ['setuptools', 'setuptools-scm', 'wheel']
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 version_scheme = "post-release"
@@ -56,3 +57,22 @@ python_version = "3.8"
 ignore_missing_imports = true
 no_implicit_optional = true
 check_untyped_defs = true
+
+[tool.tbump.version]
+current = "0.0.0"
+regex = '''
+  (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:\.(?P<extra>.+))?
+'''
+
+[[tool.tbump.field]]
+name = "extra"
+default = ""
+
+[[tool.tbump.file]]
+src = "slim_trees/_version.py"
+version_template = '({major}, {minor}, {patch}, "{extra}")'
+search = "version_info = {current_version}"
+
+[tool.tbump.git]
+message_template = "Bump to {new_version}"
+tag_template = "v{new_version}"
