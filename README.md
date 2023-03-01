@@ -1,4 +1,4 @@
-# pickle_compression
+# Slim Trees
 
 [![CI](https://github.com/pavelzw/pickle-compression/actions/workflows/ci.yml/badge.svg)](https://github.com/pavelzw/pickle-compression/actions/workflows/ci.yml)
 [![conda-forge](https://img.shields.io/conda/vn/conda-forge/pickle-compression?logoColor=white&logo=conda-forge)](https://anaconda.org/conda-forge/pickle-compression)
@@ -15,10 +15,10 @@ You can install the package in development mode using:
 git clone git@github.com:pavelzw/pickle-compression.git
 cd pickle-compression
 
-# create and activate a fresh environment named pickle_compression
+# create and activate a fresh environment named slim_trees
 # see environment.yml for details
 mamba env create
-conda activate pickle_compression
+conda activate slim_trees
 
 pre-commit install
 pip install --no-build-isolation -e .

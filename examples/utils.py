@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 
-from pickle_compression.pickling import dump_compressed, load_compressed
+from slim_trees.pickling import dump_compressed, load_compressed
 
 
 def generate_dataset(

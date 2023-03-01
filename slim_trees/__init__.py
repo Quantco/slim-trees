@@ -15,7 +15,7 @@ from typing import Any, Union
 
 import pkg_resources
 
-from pickle_compression.pickling import dump_compressed
+from slim_trees.pickling import dump_compressed
 
 try:
     __version__ = pkg_resources.get_distribution(__name__).version
@@ -37,7 +37,7 @@ def dump_sklearn_compressed(
                         of the compression library.
                         Inspired by the pandas.to_csv interface.
     """
-    from pickle_compression.sklearn_tree import dump_sklearn
+    from slim_trees.sklearn_tree import dump_sklearn
 
     dump_compressed(model, path, compression, dump_sklearn)
 
@@ -45,6 +45,6 @@ def dump_sklearn_compressed(
 def dump_lgbm_compressed(
     model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
 ):
-    from pickle_compression.lgbm_booster import dump_lgbm
+    from slim_trees.lgbm_booster import dump_lgbm
 
     dump_compressed(model, path, compression, dump_lgbm)

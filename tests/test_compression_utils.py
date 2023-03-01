@@ -1,6 +1,6 @@
 import numpy as np
 
-from pickle_compression.compression_utils import (
+from slim_trees.compression_utils import (
     _is_in_neighborhood_of_int,
     compress_half_int_float_array,
     decompress_half_int_float_array,

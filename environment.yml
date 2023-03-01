@@ -1,4 +1,4 @@
-name: pickle_compression
+name: slim_trees
 channels:
   - conda-forge
   - nodefaults

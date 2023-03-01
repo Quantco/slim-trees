@@ -8,9 +8,9 @@ from utils import (
     generate_dataset,
 )
 
-from pickle_compression import dump_sklearn_compressed
-from pickle_compression.pickling import load_compressed
-from pickle_compression.sklearn_tree import dump_sklearn
+from slim_trees import dump_sklearn_compressed
+from slim_trees.pickling import load_compressed
+from slim_trees.sklearn_tree import dump_sklearn
 
 
 def train_model() -> RandomForestRegressor:

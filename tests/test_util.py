@@ -1,7 +1,7 @@
 import timeit
 
-from pickle_compression import dump_compressed
-from pickle_compression.pickling import load_compressed
+from slim_trees import dump_compressed
+from slim_trees.pickling import load_compressed
 
 
 def get_dump_times(model, dump_lib_compressed, tmp_path, method):

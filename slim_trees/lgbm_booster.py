@@ -7,7 +7,7 @@ from typing import Any, BinaryIO, List, Tuple
 
 import numpy as np
 
-from pickle_compression.compression_utils import (
+from slim_trees.compression_utils import (
     compress_half_int_float_array,
     decompress_half_int_float_array,
 )

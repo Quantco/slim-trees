@@ -10,9 +10,9 @@ from utils import (
     generate_dataset,
 )
 
-from pickle_compression import dump_lgbm_compressed
-from pickle_compression.lgbm_booster import dump_lgbm
-from pickle_compression.pickling import load_compressed
+from slim_trees import dump_lgbm_compressed
+from slim_trees.lgbm_booster import dump_lgbm
+from slim_trees.pickling import load_compressed
 
 
 def train_model() -> lgb.LGBMRegressor:

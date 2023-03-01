@@ -69,7 +69,7 @@ name = "extra"
 default = ""
 
 [[tool.tbump.file]]
-src = "pickle_compression/_version.py"
+src = "slim_trees/_version.py"
 version_template = '({major}, {minor}, {patch}, "{extra}")'
 search = "version_info = {current_version}"
 
