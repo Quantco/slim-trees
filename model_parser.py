@@ -1,3 +1,4 @@
+import pickle
 from curses.ascii import isdigit
 import re
 from typing import Union
@@ -64,6 +65,13 @@ def get_type(s: str):
     else:
         return str
 
+def pyarrow_table_to_bytes(table: pa.Table) -> bytes:
+    stream = pa.BufferOutputStream()
+    writer = pa.RecordBatchStreamWriter(stream, table.schema)
+    writer.write_table(table)
+    writer.close()
+    return stream.getvalue().to_pybytes()
+
 
 if __name__ == "__main__":
     # df = df_from_model_string(open("test_model_string.model", "r").read())
@@ -80,21 +88,45 @@ if __name__ == "__main__":
             pass
 
     df.to_parquet("private_/lgb1_conv.parquet")
-    table: pa.Table = pa.Table.from_pandas(df).drop(['node_idx', 'split_gain', 'leaf_weight', 'leaf_count', 'internal_value', 'internal_weight', 'internal_count'])
-    target_schema = pa.schema([
-        pa.field('tree_idx', pa.int16()),
-        pa.field('split_feature', pa.int16()),
-        # pa.field('split_gain', pa.float64()),
-        pa.field('threshold', pa.float64()),  # TODO: half int array has the same size effect, validate.
-        pa.field('decision_type', pa.int8()),
-        pa.field('left_child', pa.int8()),
-        pa.field('right_child', pa.int8()),
-        pa.field('leaf_value', pa.float64()),
-        # pa.field('leaf_weight', pa.float64()),
-        # pa.field('leaf_count', pa.int32()),
-        # pa.field('internal_value', pa.float64()),
-        # pa.field('internal_weight', pa.float64()),
-        # pa.field('internal_count', pa.int32()),
-    ])
+    table: pa.Table = pa.Table.from_pandas(df).drop(
+        [
+            "node_idx",
+            "split_gain",
+            "leaf_weight",
+            "leaf_count",
+            "internal_value",
+            "internal_weight",
+            "internal_count",
+        ]
+    )
+    target_schema = pa.schema(
+        [
+            pa.field("tree_idx", pa.int16()),
+            pa.field("split_feature", pa.int16()),
+            # pa.field('split_gain', pa.float64()),
+            pa.field(
+                "threshold", pa.float64()
+            ),  # TODO: half int array has the same size effect, validate.
+            pa.field("decision_type", pa.int8()),
+            pa.field("left_child", pa.int8()),
+            pa.field("right_child", pa.int8()),
+            pa.field("leaf_value", pa.float64()),
+            # pa.field('leaf_weight', pa.float64()),
+            # pa.field('leaf_count', pa.int32()),
+            # pa.field('internal_value', pa.float64()),
+            # pa.field('internal_weight', pa.float64()),
+            # pa.field('internal_count', pa.int32()),
+        ]
+    )
     table_enc = pa.Table.from_arrays([*table], schema=target_schema)
     pq.write_table(table_enc, "private_/lgb1.parquet.lz4", compression="lz4")
+    table_bytes = pyarrow_table_to_bytes(table_enc)
+    pickle.dump(table_bytes, open("private_/byte_dumps/lgb1.parquet.pkl", "wb"))
+
+    # recreate again
+    table_bytes_loaded = pickle.load(open("private_/byte_dumps/lgb1.parquet.pkl", "rb"))
+    table_loaded = pa.ipc.open_stream(table_bytes_loaded).read_all()
+
+    # check if tables are equal
+    assert table_enc.equals(table_loaded)
+    exit(0)
