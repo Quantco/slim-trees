@@ -65,6 +65,7 @@ def get_type(s: str):
     else:
         return str
 
+
 def pyarrow_table_to_bytes(table: pa.Table) -> bytes:
     stream = pa.BufferOutputStream()
     writer = pa.RecordBatchStreamWriter(stream, table.schema)
