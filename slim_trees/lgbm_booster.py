@@ -135,7 +135,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, str]
         """
 
         tree = {
-            "tree_idx": tree_idx,
+            "tree_idx": int(tree_idx),
             "num_leaves": int(feats_map["num_leaves"][0]),
             "num_cat": int(feats_map["num_cat"][0]),
             "last_leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype)[-1],
@@ -145,11 +145,9 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, str]
         trees.append(tree)
 
         node = {
-            "tree_idx": tree_idx,  # TODO: this is new, have to recover this as well
+            "tree_idx": int(tree_idx),  # TODO: this is new, have to recover this as well
             "node_idx": list(range(int(feats_map["num_leaves"][0]) - 1)),
             # all of these attributes have length num_leaves - 1
-            "num_leaves": int(feats_map["num_leaves"][0]),
-            "num_cat": int(feats_map["num_cat"][0]),
             "split_feature": parse(feats_map["split_feature"], split_feature_dtype),
             # "threshold": compress_half_int_float_array(
             #     parse(feats_map["threshold"], threshold_dtype)
@@ -165,8 +163,19 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, str]
         nodes.append(node)
 
     trees_df = pd.DataFrame(trees)
-    # create .parquet file in bytes from trees_df
-    trees_df_bytes = pyarrow_table_to_bytes(pa.Table.from_pandas(trees_df))
+    # create tree schema for table
+    tree_schema = pa.schema(
+        [
+            pa.field("tree_idx", pa.int16()),
+            pa.field("num_leaves", pa.int16()),
+            pa.field("num_cat", pa.int8()),
+            pa.field("last_leaf_value", pa.float64()),
+            pa.field("is_linear", pa.bool_()),
+            pa.field("is_shrinkage", pa.float64()),
+        ]
+    )
+    trees_table = pa.Table.from_pandas(trees_df, schema=tree_schema)
+    trees_df_bytes = pyarrow_table_to_bytes(trees_table)
 
     # transform nodes_df s.t. each feature is a column
     nodes_df = pd.DataFrame(nodes)
@@ -181,7 +190,21 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, str]
             "leaf_value",
         ]
     )
-    nodes_df_bytes = pyarrow_table_to_bytes(pa.Table.from_pandas(nodes_df))
+    node_schema = pa.schema(
+        [
+            pa.field("tree_idx", pa.int16()),
+            pa.field("node_idx", pa.int16()),
+            pa.field("split_feature", pa.int16()),
+            pa.field("threshold", pa.float64()),
+            pa.field("decision_type", pa.int8()),
+            pa.field("left_child", pa.int16()),
+            pa.field("right_child", pa.int16()),
+            pa.field("leaf_value", pa.float64()),
+        ]
+    )
+    nodes_table = pa.Table.from_pandas(nodes_df, schema=node_schema)
+
+    nodes_df_bytes = pyarrow_table_to_bytes(nodes_table)
 
     return front_str, trees_df_bytes, nodes_df_bytes, back_str
 

@@ -176,8 +176,8 @@ if __name__ == "__main__":
     models_to_benchmark = [
         # ("`RandomForestRegressor`", train_model_sklearn, dump_sklearn),
         # ("`GradientBoostingRegressor`", train_gb_sklearn, dump_sklearn),
-        # ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
-        # ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
+        ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
+        ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
         ("`LGBMRegressor rf`", train_rf_lgbm, dump_lgbm),
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
