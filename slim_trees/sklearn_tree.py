@@ -1,7 +1,7 @@
 import os
 import sys
 
-from slim_trees.compression_utils import (
+from slim_trees.compression import (
     compress_half_int_float_array,
     decompress_half_int_float_array,
 )

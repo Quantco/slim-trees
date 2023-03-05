@@ -9,7 +9,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import numpy as np
 
-from slim_trees.compression_utils import (
+from slim_trees.compression import (
     compress_half_int_float_array,
     decompress_half_int_float_array,
 )
