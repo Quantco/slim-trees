@@ -63,9 +63,10 @@ def _decompress_booster_state(compressed_state: dict):
 def pyarrow_table_to_bytes(table: pa.Table) -> bytes:
     # TODO: move to utils
     stream = pa.BufferOutputStream()
-    writer = pa.RecordBatchStreamWriter(stream, table.schema)
-    writer.write_table(table)
-    writer.close()
+    # writer = pa.RecordBatchStreamWriter(stream, table.schema)
+    # writer.write_table(table)  # TODO: include compression
+    # writer.close()
+    pq.write_table(table, stream)  # TODO: investigate
     return stream.getvalue().to_pybytes()
 
 
@@ -147,18 +148,13 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, str]
         node = {
             "tree_idx": int(tree_idx),  # TODO: this is new, have to recover this as well
             "node_idx": list(range(int(feats_map["num_leaves"][0]) - 1)),
-            # all of these attributes have length num_leaves - 1
+            # all the upcoming attributes have length num_leaves - 1
             "split_feature": parse(feats_map["split_feature"], split_feature_dtype),
-            # "threshold": compress_half_int_float_array(
-            #     parse(feats_map["threshold"], threshold_dtype)
-            # ),
             "threshold": parse(feats_map["threshold"], threshold_dtype),
             "decision_type": parse(feats_map["decision_type"], decision_type_dtype),
             "left_child": parse(feats_map["left_child"], left_child_dtype),
             "right_child": parse(feats_map["right_child"], right_child_dtype),
-            "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype)[
-                :-1
-            ],  # don't get the last value
+            "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype)[:-1],
         }
         nodes.append(node)
 
@@ -174,7 +170,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, str]
             pa.field("is_shrinkage", pa.float64()),
         ]
     )
-    trees_table = pa.Table.from_pandas(trees_df, schema=tree_schema)
+    trees_table = pa.Table.from_pandas(trees_df)
     trees_df_bytes = pyarrow_table_to_bytes(trees_table)
 
     # transform nodes_df s.t. each feature is a column
@@ -190,19 +186,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, str]
             "leaf_value",
         ]
     )
-    node_schema = pa.schema(
-        [
-            pa.field("tree_idx", pa.int16()),
-            pa.field("node_idx", pa.int16()),
-            pa.field("split_feature", pa.int16()),
-            pa.field("threshold", pa.float64()),
-            pa.field("decision_type", pa.int8()),
-            pa.field("left_child", pa.int16()),
-            pa.field("right_child", pa.int16()),
-            pa.field("leaf_value", pa.float64()),
-        ]
-    )
-    nodes_table = pa.Table.from_pandas(nodes_df, schema=node_schema)
+    nodes_table = pa.Table.from_pandas(nodes_df)
 
     nodes_df_bytes = pyarrow_table_to_bytes(nodes_table)
 
@@ -219,7 +203,8 @@ def _decompress_booster_handle(compressed_state: Tuple[str, bytes, bytes, str]) 
 
     handle = front_str
 
-    for i, tree in enumerate(trees):
+    # TODO: directly go over trees and nodes
+    for i, tree in enumerate(trees_df):
         assert type(tree) == dict
         assert tree.keys() == {
             "num_leaves",
