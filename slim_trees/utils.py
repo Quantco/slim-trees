@@ -1,3 +1,5 @@
+import io
+
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pandas as pd
@@ -16,7 +18,4 @@ def pq_bytes_to_df(bytes_: bytes) -> pd.DataFrame:
     """
     Given a .parquet file as bytes, return a pandas DataFrame.
     """
-    stream = pa.BufferReader(bytes_)
-    reader = pa.RecordBatchStreamReader(stream)
-    table = reader.read_all()
-    return table.to_pandas()
+    return pd.read_parquet(io.BytesIO(bytes_))
