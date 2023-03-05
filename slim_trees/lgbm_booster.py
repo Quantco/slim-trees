@@ -13,6 +13,7 @@ from slim_trees.compression import (
     compress_half_int_float_array,
     decompress_half_int_float_array,
 )
+from slim_trees.utils import pyarrow_table_to_bytes, pq_bytes_to_df
 
 try:
     from lightgbm.basic import Booster
@@ -58,26 +59,6 @@ def _decompress_booster_state(compressed_state: dict):
     state = {k: v for k, v in compressed_state.items() if k != "compressed_handle"}
     state["handle"] = _decompress_booster_handle(compressed_state["compressed_handle"])
     return state
-
-
-def pyarrow_table_to_bytes(table: pa.Table) -> bytes:
-    # TODO: move to utils
-    stream = pa.BufferOutputStream()
-    # writer = pa.RecordBatchStreamWriter(stream, table.schema)
-    # writer.write_table(table)  # TODO: include compression
-    # writer.close()
-    pq.write_table(table, stream)  # TODO: investigate
-    return stream.getvalue().to_pybytes()
-
-
-def bytes_to_pandas_df(bytes_: bytes) -> pd.DataFrame:
-    """
-    Given a bytes object, create a pandas DataFrame.
-    """
-    stream = pa.BufferReader(bytes_)
-    reader = pa.RecordBatchStreamReader(stream)
-    table = reader.read_all()
-    return table.to_pandas()
 
 
 def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, str]:
@@ -159,17 +140,6 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, str]
         nodes.append(node)
 
     trees_df = pd.DataFrame(trees)
-    # create tree schema for table
-    tree_schema = pa.schema(
-        [
-            pa.field("tree_idx", pa.int16()),
-            pa.field("num_leaves", pa.int16()),
-            pa.field("num_cat", pa.int8()),
-            pa.field("last_leaf_value", pa.float64()),
-            pa.field("is_linear", pa.bool_()),
-            pa.field("is_shrinkage", pa.float64()),
-        ]
-    )
     trees_table = pa.Table.from_pandas(trees_df)
     trees_df_bytes = pyarrow_table_to_bytes(trees_table)
 
@@ -198,8 +168,8 @@ def _decompress_booster_handle(compressed_state: Tuple[str, bytes, bytes, str]) 
     assert type(front_str) == str
     # assert type(trees) == list
     assert type(back_str) == str
-    trees_df = bytes_to_pandas_df(trees_df_bytes)
-    nodes_df = bytes_to_pandas_df(nodes_df_bytes)
+    trees_df = pq_bytes_to_df(trees_df_bytes)
+    nodes_df = pq_bytes_to_df(nodes_df_bytes)
 
     handle = front_str
 
