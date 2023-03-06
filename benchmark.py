@@ -52,7 +52,7 @@ def train_gbdt_lgbm() -> lgb.LGBMRegressor:
 
 def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
     return load_model(
-        "gbdt_large_lgbm", lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42)
+        "gbdt_large_lgbm", lambda: lgb.LGBMRegressor(n_estimators=20000, random_state=42)
     )
 
 
