@@ -11,6 +11,8 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from examples.utils import generate_dataset
 from slim_trees.lgbm_booster import dump_lgbm
 
+MODELS_PATH = "examples/benchmark_models"
+
 
 def train_gb_sklearn() -> GradientBoostingRegressor:
     regressor = GradientBoostingRegressor(n_estimators=2000, random_state=42)
@@ -37,7 +39,7 @@ def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
 
 
 def load_rf_lgbm() -> lgb.LGBMRegressor:
-    if Path("examples/benchmark_models/rf_lgbm.model").exists():
+    if Path(f"{MODELS_PATH}/rf_lgbm.model").exists():
         return lgb.LGBMRegressor(model_file="examples/rf_lgbm.model")
 
     regressor = lgb.LGBMRegressor(
@@ -49,7 +51,8 @@ def load_rf_lgbm() -> lgb.LGBMRegressor:
         bagging_fraction=0.5,
     )
     regressor.fit(*generate_dataset(n_samples=10000))
-    regressor.booster_.save_model("examples/benchmark_models/rf_lgbm.model")
+    Path("examples/benchmark_models").mkdir(exist_ok=True)
+    regressor.booster_.save_model(f"{MODELS_PATH}/rf_lgbm.model")
     return regressor
 
 
