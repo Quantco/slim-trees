@@ -55,7 +55,7 @@ def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
     )
 
 
-def load_rf_lgbm() -> lgb.LGBMRegressor:
+def train_rf_lgbm() -> lgb.LGBMRegressor:
     return load_model(
         "rg_lgbm",
         lambda: lgb.LGBMRegressor(
@@ -113,7 +113,7 @@ def benchmark_model(name, train_func, dump_func) -> dict:
 
 
 def format_size(n_bytes: int) -> str:
-    MiB = 1024**2
+    MiB = 1024 ** 2
     return f"{n_bytes / MiB:.1f} MiB"
 
 
@@ -162,22 +162,10 @@ def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
 
 if __name__ == "__main__":
     models_to_benchmark = [
-        ("`RandomForestRegressor`", train_model_sklearn, dump_sklearn),
-        ("`GradientBoostingRegressor`", train_gb_sklearn, dump_sklearn),
-        ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
-        ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
-        ("`LGBMRegressor rf`", load_rf_lgbm, dump_lgbm),
-    ]
-    benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
-    print("Base results / Our results / Change")
-    print(format_benchmarks_results_table(benchmark_results))
-
-if __name__ == "__main__":
-    models_to_benchmark = [
         # ("`RandomForestRegressor`", train_model_sklearn, dump_sklearn),
         # ("`GradientBoostingRegressor`", train_gb_sklearn, dump_sklearn),
-        ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
-        ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
+        # ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
+        # ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
         ("`LGBMRegressor rf`", train_rf_lgbm, dump_lgbm),
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
