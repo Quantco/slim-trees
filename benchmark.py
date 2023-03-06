@@ -2,6 +2,7 @@ import io
 import pickle
 import textwrap
 import time
+import warnings
 from pathlib import Path
 from typing import Any, Callable, List
 
@@ -65,6 +66,7 @@ def train_rf_lgbm() -> lgb.LGBMRegressor:
             random_state=42,
             bagging_freq=5,
             bagging_fraction=0.5,
+            verbose=-1
         ),
     )
 
