@@ -1,8 +1,8 @@
 name: Benchmark
 on: pull_request
 permissions:
-   pull-requests: write
-   contents: read
+  pull-requests: write
+  contents: read
 
 jobs:
   benchmark:
@@ -17,6 +17,13 @@ jobs:
             python=3.11
       - name: Install repository
         run: python -m pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
+      - name: Cache models
+        uses: actions/cache@v3
+        env:
+          cache-name: benchmark-model-cache
+        with:
+          path: ~/examples/benchmark_models
+          key: models-${{ hashFiles('benchmark.py') }}
       - name: Run benchmark
         shell: bash -el {0}
         run: |
