@@ -3,7 +3,7 @@ import pickle
 import textwrap
 import time
 from pathlib import Path
-from typing import Callable, List, Any
+from typing import Any, Callable, List
 
 import lightgbm as lgb
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
@@ -31,30 +31,42 @@ def load_model(model_name: str, generate: Callable) -> Any:
 
 
 def train_gb_sklearn() -> GradientBoostingRegressor:
-    return load_model("gb_sklearn", lambda: GradientBoostingRegressor(n_estimators=2000, random_state=42))
+    return load_model(
+        "gb_sklearn",
+        lambda: GradientBoostingRegressor(n_estimators=2000, random_state=42),
+    )
 
 
 def train_model_sklearn() -> RandomForestRegressor:
-    return load_model("rf_sklearn", lambda: RandomForestRegressor(n_estimators=100, random_state=42))
+    return load_model(
+        "rf_sklearn", lambda: RandomForestRegressor(n_estimators=100, random_state=42)
+    )
 
 
 def train_gbdt_lgbm() -> lgb.LGBMRegressor:
-    return load_model("gbdt_lgbm", lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42))
+    return load_model(
+        "gbdt_lgbm", lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42)
+    )
 
 
 def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
-    return load_model("gbdt_large_lgbm", lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42))
+    return load_model(
+        "gbdt_large_lgbm", lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42)
+    )
 
 
 def load_rf_lgbm() -> lgb.LGBMRegressor:
-    return load_model("rg_lgbm", lambda: lgb.LGBMRegressor(
-        boosting_type="rf",
-        n_estimators=100,
-        num_leaves=1000,
-        random_state=42,
-        bagging_freq=5,
-        bagging_fraction=0.5,
-    ))
+    return load_model(
+        "rg_lgbm",
+        lambda: lgb.LGBMRegressor(
+            boosting_type="rf",
+            n_estimators=100,
+            num_leaves=1000,
+            random_state=42,
+            bagging_freq=5,
+            bagging_fraction=0.5,
+        ),
+    )
 
 
 def benchmark(func: Callable, *args, **kwargs) -> float:
@@ -101,7 +113,7 @@ def benchmark_model(name, train_func, dump_func) -> dict:
 
 
 def format_size(n_bytes: int) -> str:
-    MiB = 1024 ** 2
+    MiB = 1024**2
     return f"{n_bytes / MiB:.1f} MiB"
 
 
