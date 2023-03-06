@@ -24,7 +24,6 @@ jobs:
         with:
           path: ~/examples/benchmark_models
           key: models-${{ hashFiles('benchmark.py') }}
-      - uses: mxschmitt/action-tmate@v3
       - name: Run benchmark
         shell: bash -el {0}
         run: |
