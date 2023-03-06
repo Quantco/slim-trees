@@ -3,57 +3,57 @@ import pickle
 import textwrap
 import time
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, Any
 
 import lightgbm as lgb
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 from examples.utils import generate_dataset
 from slim_trees.lgbm_booster import dump_lgbm
+from slim_trees.sklearn_tree import dump_sklearn
 
 MODELS_PATH = "examples/benchmark_models"
 
 
-def train_gb_sklearn() -> GradientBoostingRegressor:
-    regressor = GradientBoostingRegressor(n_estimators=2000, random_state=42)
+def load_model(model_name: str, generate: Callable) -> Any:
+    model_path = Path(f"{MODELS_PATH}/{model_name}.pkl")
+
+    if model_path.exists():
+        with open(model_path, "rb") as f:
+            return pickle.load(f)
+
+    regressor = generate()
     regressor.fit(*generate_dataset(n_samples=10000))
+    with open(model_path, "wb") as f:
+        pickle.dump(regressor, f)
     return regressor
+
+
+def train_gb_sklearn() -> GradientBoostingRegressor:
+    return load_model("gb_sklearn", lambda: GradientBoostingRegressor(n_estimators=2000, random_state=42))
 
 
 def train_model_sklearn() -> RandomForestRegressor:
-    regressor = RandomForestRegressor(n_estimators=100, random_state=42)
-    regressor.fit(*generate_dataset(n_samples=10000))
-    return regressor
+    return load_model("rf_sklearn", lambda: RandomForestRegressor(n_estimators=100, random_state=42))
 
 
 def train_gbdt_lgbm() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(n_estimators=2000, random_state=42)
-    regressor.fit(*generate_dataset(n_samples=10000))
-    return regressor
+    return load_model("gbdt_lgbm", lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42))
 
 
 def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(n_estimators=20000, random_state=42)
-    regressor.fit(*generate_dataset(n_samples=10000))
-    return regressor
+    return load_model("gbdt_large_lgbm", lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42))
 
 
 def load_rf_lgbm() -> lgb.LGBMRegressor:
-    if Path(f"{MODELS_PATH}/rf_lgbm.model").exists():
-        return lgb.LGBMRegressor(model_file="examples/rf_lgbm.model")
-
-    regressor = lgb.LGBMRegressor(
+    return load_model("rg_lgbm", lambda: lgb.LGBMRegressor(
         boosting_type="rf",
         n_estimators=100,
         num_leaves=1000,
         random_state=42,
         bagging_freq=5,
         bagging_fraction=0.5,
-    )
-    regressor.fit(*generate_dataset(n_samples=10000))
-    Path("examples/benchmark_models").mkdir(exist_ok=True)
-    regressor.booster_.save_model(f"{MODELS_PATH}/rf_lgbm.model")
-    return regressor
+    ))
 
 
 def benchmark(func: Callable, *args, **kwargs) -> float:
@@ -149,10 +149,10 @@ def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
 
 if __name__ == "__main__":
     models_to_benchmark = [
-        # ("`RandomForestRegressor`", train_model_sklearn, dump_sklearn),
-        # ("`GradientBoostingRegressor`", train_gb_sklearn, dump_sklearn),
-        # ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
-        # ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
+        ("`RandomForestRegressor`", train_model_sklearn, dump_sklearn),
+        ("`GradientBoostingRegressor`", train_gb_sklearn, dump_sklearn),
+        ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
+        ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
         ("`LGBMRegressor rf`", load_rf_lgbm, dump_lgbm),
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
