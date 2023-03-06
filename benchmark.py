@@ -10,7 +10,6 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 from examples.utils import generate_dataset
 from slim_trees.lgbm_booster import dump_lgbm
-from slim_trees.sklearn_tree import dump_sklearn
 
 
 def train_gb_sklearn() -> GradientBoostingRegressor:
@@ -99,7 +98,7 @@ def benchmark_model(name, train_func, dump_func) -> dict:
 
 
 def format_size(n_bytes: int) -> str:
-    MiB = 1024 ** 2
+    MiB = 1024**2
     return f"{n_bytes / MiB:.1f} MiB"
 
 
