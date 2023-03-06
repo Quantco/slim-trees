@@ -175,7 +175,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
 
 
 def _decompress_booster_handle(
-    compressed_state: Tuple[str, bytes, bytes, bytes, str]
+        compressed_state: Tuple[str, bytes, bytes, bytes, str]
 ) -> str:
     (
         front_str,
@@ -247,17 +247,3 @@ def _decompress_booster_handle(
         handle += tree_str
     handle += back_str
     return handle
-
-
-def compress_handle_parquet(trees: List[dict]) -> bytes:
-    """
-    Take the list of dictionaries (tree) and create a pyarrow Table.
-    """
-
-    # step 1: turn features into pyarrow arrays
-    # loop over all tree dicts in trees and create one dict per node with all features
-    for _tree in trees:
-        pass
-    # step 2: create pyarrow table
-    # step 3: write table to parquet
-    # step 4: return bytes
