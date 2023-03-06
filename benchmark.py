@@ -2,6 +2,7 @@ import io
 import pickle
 import textwrap
 import time
+from pathlib import Path
 from typing import Callable, List
 
 import lightgbm as lgb
@@ -36,17 +37,22 @@ def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
     return regressor
 
 
-def train_rf_lgbm() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(
-        boosting_type="rf",
-        n_estimators=100,
-        num_leaves=1000,
-        random_state=42,
-        bagging_freq=5,
-        bagging_fraction=0.5,
-    )
-    regressor.fit(*generate_dataset(n_samples=10000))
-    return regressor
+def load_rf_lgbm() -> lgb.LGBMRegressor:
+    if Path("examples/benchmark_models/rf_lgbm.model").exists():
+        return lgb.LGBMRegressor(model_file="examples/rf_lgbm.model")
+
+    else:
+        regressor = lgb.LGBMRegressor(
+            boosting_type="rf",
+            n_estimators=100,
+            num_leaves=1000,
+            random_state=42,
+            bagging_freq=5,
+            bagging_fraction=0.5,
+        )
+        regressor.fit(*generate_dataset(n_samples=10000))
+        regressor.booster_.save_model("examples/benchmark_models/rf_lgbm.model")
+        return regressor
 
 
 def benchmark(func: Callable, *args, **kwargs) -> float:
@@ -93,7 +99,7 @@ def benchmark_model(name, train_func, dump_func) -> dict:
 
 
 def format_size(n_bytes: int) -> str:
-    MiB = 1024**2
+    MiB = 1024 ** 2
     return f"{n_bytes / MiB:.1f} MiB"
 
 
@@ -142,11 +148,11 @@ def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
 
 if __name__ == "__main__":
     models_to_benchmark = [
-        ("`RandomForestRegressor`", train_model_sklearn, dump_sklearn),
-        ("`GradientBoostingRegressor`", train_gb_sklearn, dump_sklearn),
-        ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
-        ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
-        ("`LGBMRegressor rf`", train_rf_lgbm, dump_lgbm),
+        # ("`RandomForestRegressor`", train_model_sklearn, dump_sklearn),
+        # ("`GradientBoostingRegressor`", train_gb_sklearn, dump_sklearn),
+        # ("`LGBMRegressor gbdt`", train_gbdt_lgbm, dump_lgbm),
+        # ("`LGBMRegressor gbdt large`", train_gbdt_large_lgbm, dump_lgbm),
+        ("`LGBMRegressor rf`", load_rf_lgbm, dump_lgbm),
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
     print("Base results / Our results / Change")
