@@ -18,12 +18,13 @@ jobs:
       - name: Install repository
         run: python -m pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
       - name: Cache models
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: benchmark-model-cache
         with:
           path: ~/examples/benchmark_models
-          key: ${{ runner.os }}-models-${{ hashFiles('benchmark.py') }}
+          key: models-${{ hashFiles('benchmark.py') }}
+      - uses: mxschmitt/action-tmate@v3
       - name: Run benchmark
         shell: bash -el {0}
         run: |

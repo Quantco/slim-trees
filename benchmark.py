@@ -40,18 +40,17 @@ def load_rf_lgbm() -> lgb.LGBMRegressor:
     if Path("examples/benchmark_models/rf_lgbm.model").exists():
         return lgb.LGBMRegressor(model_file="examples/rf_lgbm.model")
 
-    else:
-        regressor = lgb.LGBMRegressor(
-            boosting_type="rf",
-            n_estimators=100,
-            num_leaves=1000,
-            random_state=42,
-            bagging_freq=5,
-            bagging_fraction=0.5,
-        )
-        regressor.fit(*generate_dataset(n_samples=10000))
-        regressor.booster_.save_model("examples/benchmark_models/rf_lgbm.model")
-        return regressor
+    regressor = lgb.LGBMRegressor(
+        boosting_type="rf",
+        n_estimators=100,
+        num_leaves=1000,
+        random_state=42,
+        bagging_freq=5,
+        bagging_fraction=0.5,
+    )
+    regressor.fit(*generate_dataset(n_samples=10000))
+    regressor.booster_.save_model("examples/benchmark_models/rf_lgbm.model")
+    return regressor
 
 
 def benchmark(func: Callable, *args, **kwargs) -> float:
@@ -98,7 +97,7 @@ def benchmark_model(name, train_func, dump_func) -> dict:
 
 
 def format_size(n_bytes: int) -> str:
-    MiB = 1024**2
+    MiB = 1024 ** 2
     return f"{n_bytes / MiB:.1f} MiB"
 
 
