@@ -24,6 +24,7 @@ def load_model(model_name: str, generate: Callable) -> Any:
 
     regressor = generate()
     regressor.fit(*generate_dataset(n_samples=10000))
+    model_path.parent.mkdir(parents=True, exist_ok=True)
     with open(model_path, "wb") as f:
         pickle.dump(regressor, f)
     return regressor
