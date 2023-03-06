@@ -21,6 +21,7 @@ def load_model(model_name: str, generate: Callable) -> Any:
 
     if model_path.exists():
         with open(model_path, "rb") as f:
+            print(f"reloading {model_name}")
             return pickle.load(f)
 
     regressor = generate()
@@ -81,6 +82,7 @@ def benchmark(func: Callable, *args, **kwargs) -> float:
 
 
 def benchmark_model(name, train_func, dump_func) -> dict:
+    print(name)
     model = train_func()
 
     naive_dump_time = benchmark(pickle.dumps, model)

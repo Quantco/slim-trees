@@ -152,6 +152,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
     trees_df_bytes = pyarrow_table_to_bytes(trees_table)
 
     # transform nodes_df s.t. each feature is a column
+    # pyarrow table from list of dicts
     nodes_df = pd.DataFrame(node_features)
     nodes_df = nodes_df.explode(
         [
@@ -174,6 +175,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
     return front_str, trees_df_bytes, nodes_df_bytes, leaf_values_bytes, back_str
 
 
+# @profile
 def _decompress_booster_handle(
         compressed_state: Tuple[str, bytes, bytes, bytes, str]
 ) -> str:
@@ -196,54 +198,83 @@ def _decompress_booster_handle(
     trees_df = trees_df.merge(nodes_df, on="tree_idx")
     trees_df = trees_df.merge(leaf_values_df, on="tree_idx")
 
-    handle = front_str
+    # handle = front_str
+
+    tree_strings = [front_str]
 
     # TODO: directly go over trees and nodes
     for i, tree in trees_df.iterrows():
-        """
-        assert type(tree) == dict
-        assert tree.keys() == {
-            "num_leaves",
-            "num_cat",
-            "split_feature",
-            "threshold",
-            "decision_type",
-            "left_child",
-            "right_child",
-            "leaf_value",
-            "is_linear",
-            "shrinkage",
-        }
-        """
+        # """
+        # assert type(tree) == dict
+        # assert tree.keys() == {
+        #     "num_leaves",
+        #     "num_cat",
+        #     "split_feature",
+        #     "threshold",
+        #     "decision_type",
+        #     "left_child",
+        #     "right_child",
+        #     "leaf_value",
+        #     "is_linear",
+        #     "shrinkage",
+        # }
+        # """
 
         num_leaves = int(tree["num_leaves"])
-        num_nodes = num_leaves - 1  # len(tree["split_feature"])
+        num_nodes = num_leaves - 1
 
-        tree_str = f"Tree={i}\n"
-        tree_str += (
-            f"num_leaves={num_leaves}\nnum_cat={tree['num_cat']}\nsplit_feature="
-        )
-        tree_str += " ".join([str(x) for x in tree["split_feature"]])
-        tree_str += "\nsplit_gain=" + ("0 " * num_nodes)[:-1]
-        threshold = tree[
-            "threshold"
-        ]  # decompress_half_int_float_array(tree["threshold"])
-        tree_str += "\nthreshold=" + " ".join([str(x) for x in threshold])
-        tree_str += "\ndecision_type=" + " ".join(
-            [str(x) for x in tree["decision_type"]]
-        )
-        tree_str += "\nleft_child=" + " ".join([str(x) for x in tree["left_child"]])
-        tree_str += "\nright_child=" + " ".join([str(x) for x in tree["right_child"]])
-        tree_str += "\nleaf_value=" + " ".join([str(x) for x in tree["leaf_value"]])
-        tree_str += "\nleaf_weight=" + ("0 " * num_leaves)[:-1]
-        tree_str += "\nleaf_count=" + ("0 " * num_leaves)[:-1]
-        tree_str += "\ninternal_value=" + ("0 " * num_nodes)[:-1]
-        tree_str += "\ninternal_weight=" + ("0 " * num_nodes)[:-1]
-        tree_str += "\ninternal_count=" + ("0 " * num_nodes)[:-1]
-        tree_str += f"\nis_linear={tree['is_linear']}"
-        tree_str += f"\nshrinkage={tree['shrinkage']}"
-        tree_str += "\n\n\n"
+        tree_strings.append(f"""Tree={i}
+num_leaves={int(tree["num_leaves"])}
+num_cat={tree['num_cat']}
+split_feature={' '.join([str(x) for x in tree["split_feature"]])}
+split_gain={("0" * num_nodes)[:-1]}
+threshold={' '.join([str(x) for x in tree['threshold']])}
+decision_type={' '.join([str(x) for x in tree["decision_type"]])}
+left_child={" ".join([str(x) for x in tree["left_child"]])}
+right_child={" ".join([str(x) for x in tree["right_child"]])}
+leaf_value={" ".join([str(x) for x in tree["leaf_value"]])}
+leaf_weight={("0 " * num_leaves)[:-1]}
+leaf_count={("0 " * num_leaves)[:-1]}
+internal_value={("0 " * num_nodes)[:-1]}
+internal_weight={("0 " * num_nodes)[:-1]}
+internal_count={("0 " * num_nodes)[:-1]}
+is_linear={tree['is_linear']}
+shrinkage={tree['shrinkage']}
 
-        handle += tree_str
-    handle += back_str
-    return handle
+
+""")
+        # TODO: remove old code
+        # num_leaves = int(tree["num_leaves"])
+        # num_nodes = num_leaves - 1  # len(tree["split_feature"])
+        #
+        # tree_str = f"Tree={i}\n"
+        # tree_str += (
+        #     f"num_leaves={num_leaves}\nnum_cat={tree['num_cat']}\nsplit_feature="
+        # )
+        # tree_str += " ".join([str(x) for x in tree["split_feature"]])
+        # tree_str += "\nsplit_gain=" + ("0 " * num_nodes)[:-1]
+        # threshold = tree[
+        #     "threshold"
+        # ]  # decompress_half_int_float_array(tree["threshold"])
+        # tree_str += "\nthreshold=" + " ".join([str(x) for x in threshold])
+        # tree_str += "\ndecision_type=" + " ".join(
+        #     [str(x) for x in tree["decision_type"]]
+        # )
+        # tree_str += "\nleft_child=" + " ".join([str(x) for x in tree["left_child"]])
+        # tree_str += "\nright_child=" + " ".join([str(x) for x in tree["right_child"]])
+        # tree_str += "\nleaf_value=" + " ".join([str(x) for x in tree["leaf_value"]])
+        # tree_str += "\nleaf_weight=" + ("0 " * num_leaves)[:-1]
+        # tree_str += "\nleaf_count=" + ("0 " * num_leaves)[:-1]
+        # tree_str += "\ninternal_value=" + ("0 " * num_nodes)[:-1]
+        # tree_str += "\ninternal_weight=" + ("0 " * num_nodes)[:-1]
+        # tree_str += "\ninternal_count=" + ("0 " * num_nodes)[:-1]
+        # tree_str += f"\nis_linear={tree['is_linear']}"
+        # tree_str += f"\nshrinkage={tree['shrinkage']}"
+        # tree_str += "\n\n\n"
+
+        # handle += tree_str
+
+    tree_strings.append(back_str)
+
+    # handle += back_str
+    return "".join(tree_strings)
