@@ -1,7 +1,7 @@
 import pickle
-from curses.ascii import isdigit
 import re
 from typing import Union
+
 import pandas as pd
 import pyarrow as pa
 from pyarrow import parquet as pq
@@ -76,7 +76,7 @@ def pyarrow_table_to_bytes(table: pa.Table) -> bytes:
 
 if __name__ == "__main__":
     # df = df_from_model_string(open("test_model_string.model", "r").read())
-    df = df_from_model_string(open("private_/lgb1.txt", "r").read())
+    df = df_from_model_string(open("private_/lgb1.txt").read())
     # TODO: cannot be interpreted directly by parquet (pyarrow & fastparquet) as of now.
     # dfo = df_from_model_string(open("lgb1.txt", "r").read(), transform_values=True)
     print(df.head(50))
