@@ -84,6 +84,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
     node_features: List[dict] = []
     leaf_values: List[dict] = []
     trees: List[dict] = []
+    linear_values: List[dict] = []
     for i, tree_match in enumerate(tree_matches):
         tree_name, features_list = tree_match
         _, tree_idx = tree_name.replace("\n", "").split("=")
@@ -113,6 +114,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
         but one of them can be "exploded" later (node level) while the tree level is for meta information
         """
 
+        # length = 1
         trees.append(
             {
                 "tree_idx": int(tree_idx),
@@ -124,6 +126,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
             }
         )
 
+        # length = num_inner_nodes = num_leaves - 1
         node_features.append(
             {
                 "tree_idx": int(
@@ -140,10 +143,19 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
             }
         )
 
+        # length = num_leaves
         leaf_values.append(
             {
                 "tree_idx": int(tree_idx),
                 "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype),
+            }
+        )
+
+        # length = sum_l=0^{num_leaves} {num_features(l)}
+        # attributes: leaf_features, leaf_coeff
+        linear_values.append(
+            {
+
             }
         )
 
