@@ -1,10 +1,14 @@
 import os
 import sys
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pandas as pd
 
 from slim_trees.compression_utils import (
     compress_half_int_float_array,
     decompress_half_int_float_array,
 )
+from slim_trees.utils import pyarrow_table_to_bytes
 
 try:
     from sklearn.tree._tree import Tree
@@ -48,7 +52,12 @@ def _compress_tree_state(state: dict):
     """
     assert isinstance(state, dict)
     assert state.keys() == {"max_depth", "node_count", "nodes", "values"}
+
     nodes = state["nodes"]
+
+    return (pa.Table.from_arrays([nodes["left_child"], nodes["right_child"], nodes["feature"], nodes["threshold"]],
+                                names=["left_child", "right_child", "feature", "threshold"])), state['values']
+
     # nodes is a numpy array of tuples of the following form
     # (left_child, right_child, feature, threshold, impurity, n_node_samples,
     #  weighted_n_node_samples)
@@ -75,15 +84,55 @@ def _compress_tree_state(state: dict):
     thresholds = nodes["threshold"][is_not_leaf].astype(dtype_threshold)
     thresholds = compress_half_int_float_array(thresholds)
 
-    return {
-        "max_depth": state["max_depth"],
-        "node_count": state["node_count"],
-        "children_left": children_left,
-        "children_right": children_right,
-        "features": features,
-        "thresholds": thresholds,
-        "values": values,
-    }
+    children_left_no_leaf = children_left[is_not_leaf]
+
+    inner_node_schema = pa.schema(
+        [
+            pa.field("children_left", pa.int16()),  # TODO uint
+            pa.field("children_right", pa.int16()),
+            pa.field("features", pa.int16()),
+            pa.field("thresholds_is_compressible", pa.bool_())
+        ]
+    )
+    inner_node_table = pa.Table.from_arrays(
+        [children_left_no_leaf, children_right, features, thresholds["is_compressible"]],
+        schema=inner_node_schema
+    )
+    # leaf_table = pa.Table.from_arrays(
+    #     [values],
+    #     schema=pa.schema([pa.field("values", pa.float32())])
+    # )
+    # threshold_compressible_table = pa.Table.from_arrays(
+    #     [thresholds["a2_compressible"]],
+    #     schema=pa.schema([pa.field("thresholds", pa.int8())])
+    # )
+    # threshold_incompressible_table = pa.Table.from_arrays(
+    #     [thresholds["a_incompressible"]],
+    #     schema=pa.schema([pa.field("thresholds", pa.float64())])
+    # )
+    #
+    # inner_node_bytes = pyarrow_table_to_bytes(inner_node_table)
+    # # leaf_bytes = pyarrow_table_to_bytes(leaf_table)
+    # threshold_compressible_bytes = pyarrow_table_to_bytes(threshold_compressible_table)
+    # threshold_incompressible_bytes = pyarrow_table_to_bytes(threshold_incompressible_table)
+
+    # return {
+    #     "inner_node": inner_node_bytes,
+    #     "leaf": values,
+    #     # "leaf": leaf_bytes,
+    #     "threshold_compressible": threshold_compressible_bytes,
+    #     "threshold_incompressible": threshold_incompressible_bytes,
+    # }
+
+    # return {
+    #     "max_depth": state["max_depth"],
+    #     "node_count": state["node_count"],
+    #     "children_left": children_left_no_leaf,
+    #     "children_right": children_right,
+    #     "features": features,
+    #     "thresholds": thresholds,
+    #     "values": values,
+    # }
 
 
 def _decompress_tree_state(state: dict):
