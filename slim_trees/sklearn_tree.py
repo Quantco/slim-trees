@@ -1,10 +1,12 @@
 import os
 import sys
 
+from slim_trees import __version__ as slim_trees_version
 from slim_trees.compression_utils import (
     compress_half_int_float_array,
     decompress_half_int_float_array,
 )
+from slim_trees.utils import check_version
 
 try:
     from sklearn.tree._tree import Tree
@@ -30,10 +32,13 @@ def _tree_pickle(tree):
     assert isinstance(tree, Tree)
     reconstructor, args, state = tree.__reduce__()
     compressed_state = _compress_tree_state(state)
-    return _tree_unpickle, (reconstructor, args, compressed_state)
+    return _tree_unpickle, (reconstructor, args, (slim_trees_version, compressed_state))
 
 
-def _tree_unpickle(reconstructor, args, state):
+def _tree_unpickle(reconstructor, args, compressed_state):
+    version, state = compressed_state
+    check_version(version)
+
     tree = reconstructor(*args)
     decompressed_state = _decompress_tree_state(state)
     tree.__setstate__(decompressed_state)
