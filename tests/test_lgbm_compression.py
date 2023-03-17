@@ -45,13 +45,14 @@ def test_dump_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_metho
     lgbm_regressor.fit(X, y)
     factor = 22 if compression_method == "no" else 10
 
-    dump_time_compressed, dump_time_uncompressed = get_dump_times(
+    time_compressed, time_uncompressed = get_dump_times(
         lgbm_regressor, dump_lgbm_compressed, tmp_path, compression_method
     )
 
     # compressed should only take [factor] times longer than uncompressed
-    assert dump_time_compressed / dump_time_uncompressed < factor, \
-        f"factor for compressed too high: {dump_time_compressed / dump_time_uncompressed:.4f} > {factor}"
+    assert (
+        time_compressed / time_uncompressed < factor
+    ), f"factor for compressed too high: {time_compressed / time_uncompressed:.4f} > {factor}"
 
 
 @pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
@@ -64,7 +65,9 @@ def test_load_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_metho
     )
     factor = 35 if compression_method == "no" else 15
     # compressed should only take [factor] times longer than uncompressed
-    assert load_time_compressed / load_time_uncompressed < factor, \
-        f"{load_time_compressed / load_time_uncompressed:.2f} > {factor}"
+    assert (
+        load_time_compressed / load_time_uncompressed < factor
+    ), f"{load_time_compressed / load_time_uncompressed:.2f} > {factor}"
+
 
 # todo add tests for large models

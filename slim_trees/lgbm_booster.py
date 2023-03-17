@@ -3,7 +3,7 @@ import os
 import pickle
 import re
 import sys
-from typing import Any, BinaryIO, List, Tuple
+from typing import Any, BinaryIO, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -57,22 +57,32 @@ def _decompress_booster_state(compressed_state: dict):
     return state
 
 
-def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, bytes, bytes, str]:
+def _extract_feature(feature_line):
+    feat_name, values_str = feature_line.split("=")
+    return feat_name, values_str.split(" ")
+
+
+split_feature_dtype = np.int16
+threshold_dtype = np.float64
+decision_type_dtype = np.int8
+left_child_dtype = np.int16
+right_child_dtype = left_child_dtype
+leaf_value_dtype = np.float64
+
+
+def _compress_booster_handle(
+    model_string: str,
+) -> Tuple[str, bytes, bytes, bytes, Optional[bytes], str]:
     if not model_string.startswith("tree\nversion=v3"):
         raise ValueError("Only v3 is supported for the booster string format.")
     FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
     BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
     TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
 
-    def _extract_feature(feature_line):
-        feat_name, values_str = feature_line.split("=")
-        return feat_name, values_str.split(" ")
-
     front_str_match = re.search(FRONT_STRING_REGEX, model_string)
     if front_str_match is None:
         raise ValueError("Could not find front string.")
     front_str = front_str_match.group()
-    # delete tree_sizes line since this messes up the tree parsing by LightGBM if not set correctly
     # todo calculate correct tree_sizes
     front_str = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str)
 
@@ -97,22 +107,10 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
         def parse(str_list, dtype):
             return np.array(str_list, dtype=dtype)
 
-        split_feature_dtype = np.int16
-        threshold_dtype = np.float64
-        decision_type_dtype = np.int8
-        left_child_dtype = np.int16
-        right_child_dtype = left_child_dtype
-        leaf_value_dtype = np.float64
         assert len(feats_map["num_leaves"]) == 1
         assert len(feats_map["num_cat"]) == 1
         assert len(feats_map["is_linear"]) == 1
         assert len(feats_map["shrinkage"]) == 1
-
-        """
-        strategy: we have two datastructures: one on tree_level and one on node_level
-        here, this looks like just splitting the features into two dicts
-        but one of them can be "exploded" later (node level) while the tree level is for meta information
-        """
 
         # length = 1
         trees.append(
@@ -129,9 +127,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
         # length = num_inner_nodes = num_leaves - 1
         node_features.append(
             {
-                "tree_idx": int(
-                    tree_idx
-                ),  # TODO: this is new, have to recover this as well
+                "tree_idx": int(tree_idx),
                 "node_idx": list(range(int(feats_map["num_leaves"][0]) - 1)),
                 # all the upcoming attributes have length num_leaves - 1
                 "split_feature": parse(feats_map["split_feature"], split_feature_dtype),
@@ -139,7 +135,6 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
                 "decision_type": parse(feats_map["decision_type"], decision_type_dtype),
                 "left_child": parse(feats_map["left_child"], left_child_dtype),
                 "right_child": parse(feats_map["right_child"], right_child_dtype),
-                # "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype)[:-1],
             }
         )
 
@@ -157,8 +152,13 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
             linear_values.append(
                 {
                     "tree_idx": int(tree_idx),
-                    "leaf_features": parse([None if not s else s for s in feats_map['leaf_features']], np.float64),
-                    "leaf_coeff": parse([None if not s else s for s in feats_map['leaf_coeff']], np.float64)
+                    "leaf_features": parse(
+                        [s if s else None for s in feats_map["leaf_features"]],
+                        np.float64,
+                    ),
+                    "leaf_coeff": parse(
+                        [s if s else None for s in feats_map["leaf_coeff"]], np.float64
+                    ),
                 }
             )
 
@@ -166,8 +166,6 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
     trees_table = pa.Table.from_pandas(trees_df)
     trees_df_bytes = pyarrow_table_to_bytes(trees_table)
 
-    # transform nodes_df s.t. each feature is a column
-    # pyarrow table from list of dicts
     nodes_df = pd.DataFrame(node_features)
     nodes_df = nodes_df.explode(
         [
@@ -187,19 +185,27 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, bytes, bytes, byte
     leaf_values_table = pa.Table.from_pandas(leaf_values_df)
     leaf_values_bytes = pyarrow_table_to_bytes(leaf_values_table)
 
+    linear_values_bytes = None
     if linear_values:
-        linear_values_df = pd.DataFrame(linear_values).explode(["leaf_features", "leaf_coeff"])
+        linear_values_df = pd.DataFrame(linear_values).explode(
+            ["leaf_features", "leaf_coeff"]
+        )
         linear_values_table = pa.Table.from_pandas(linear_values_df)
         linear_values_bytes = pyarrow_table_to_bytes(linear_values_table)
-    else:
-        linear_values_bytes = None
 
-    return front_str, trees_df_bytes, nodes_df_bytes, leaf_values_bytes, linear_values_bytes, back_str
+    return (
+        front_str,
+        trees_df_bytes,
+        nodes_df_bytes,
+        leaf_values_bytes,
+        linear_values_bytes,
+        back_str,
+    )
 
 
 # @profile
 def _decompress_booster_handle(
-        compressed_state: Tuple[str, bytes, bytes, bytes, bytes, str]
+    compressed_state: Tuple[str, bytes, bytes, bytes, bytes, str]
 ) -> str:
     (
         front_str,
@@ -222,18 +228,21 @@ def _decompress_booster_handle(
     trees_df = trees_df.merge(nodes_df, on="tree_idx")
     trees_df = trees_df.merge(leaf_values_df, on="tree_idx")
     if linear_values_bytes is not None:
-        linear_values_df = pq_bytes_to_df(linear_values_bytes).groupby("tree_idx").agg(lambda x: list(x))
-        trees_df = trees_df.merge(linear_values_df, on='tree_idx')
+        linear_values_df = (
+            pq_bytes_to_df(linear_values_bytes)
+            .groupby("tree_idx")
+            .agg(lambda x: list(x))
+        )
+        trees_df = trees_df.merge(linear_values_df, on="tree_idx")
 
     tree_strings = [front_str]
 
     for i, tree in trees_df.iterrows():
-
         num_leaves = int(tree["num_leaves"])
         num_nodes = num_leaves - 1
 
         # add the appropriate block if those values are present
-        if tree['is_linear']:
+        if tree["is_linear"]:
             linear_str = f"""
 leaf_features={" ".join(["" if np.isnan(f) else str(int(f)) for f in tree['leaf_features']])}
 leaf_coeff={" ".join(["" if np.isnan(f) else str(f) for f in tree['leaf_coeff']])}
@@ -241,7 +250,8 @@ leaf_coeff={" ".join(["" if np.isnan(f) else str(f) for f in tree['leaf_coeff']]
         else:
             linear_str = ""
 
-        tree_strings.append(f"""Tree={i}
+        tree_strings.append(
+            f"""Tree={i}
 num_leaves={int(tree["num_leaves"])}
 num_cat={tree['num_cat']}
 split_feature={' '.join([str(x) for x in tree["split_feature"]])}
@@ -260,7 +270,8 @@ is_linear={tree['is_linear']}
 shrinkage={tree['shrinkage']}{linear_str}
 
 
-""")
+"""
+        )
 
     tree_strings.append(back_str)
 

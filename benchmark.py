@@ -2,7 +2,6 @@ import io
 import pickle
 import textwrap
 import time
-import warnings
 from pathlib import Path
 from typing import Any, Callable, List
 
@@ -53,7 +52,8 @@ def train_gbdt_lgbm() -> lgb.LGBMRegressor:
 
 def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
     return load_model(
-        "gbdt_large_lgbm", lambda: lgb.LGBMRegressor(n_estimators=20000, random_state=42)
+        "gbdt_large_lgbm",
+        lambda: lgb.LGBMRegressor(n_estimators=20000, random_state=42),
     )
 
 
@@ -67,7 +67,7 @@ def train_rf_lgbm() -> lgb.LGBMRegressor:
             random_state=42,
             bagging_freq=5,
             bagging_fraction=0.5,
-            verbose=-1
+            verbose=-1,
         ),
     )
 
@@ -117,7 +117,7 @@ def benchmark_model(name, train_func, dump_func) -> dict:
 
 
 def format_size(n_bytes: int) -> str:
-    MiB = 1024 ** 2
+    MiB = 1024**2
     return f"{n_bytes / MiB:.1f} MiB"
 
 
