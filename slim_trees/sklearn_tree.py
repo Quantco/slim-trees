@@ -57,13 +57,13 @@ def _compress_tree_state(state: dict):
     # nodes is a numpy array of tuples of the following form
     # (left_child, right_child, feature, threshold, impurity, n_node_samples,
     #  weighted_n_node_samples)
-    dtype_child = np.int16
-    dtype_feature = np.int16
+    dtype_child = np.uint16
+    dtype_feature = np.uint16
     dtype_threshold = np.float64
     dtype_value = np.float32
 
-    children_left = nodes["left_child"].astype(dtype_child)
-    children_right = nodes["right_child"].astype(dtype_child)
+    children_left = nodes["left_child"]
+    children_right = nodes["right_child"]
 
     is_leaf = children_left == -1
     is_not_leaf = np.logical_not(is_leaf)
@@ -71,8 +71,8 @@ def _compress_tree_state(state: dict):
     assert np.array_equal(is_leaf, children_right == -1)
 
     # feature, threshold and children are irrelevant when leaf
-    # don't omit children_left -1 values because they are needed to identify leaves
-    children_right = children_right[is_not_leaf]
+    children_left = children_left[is_not_leaf].astype(dtype_child)
+    children_right = children_right[is_not_leaf].astype(dtype_child)
     features = nodes["feature"][is_not_leaf].astype(dtype_feature)
     # value is irrelevant when node not a leaf
     values = state["values"][is_leaf].astype(dtype_value)
@@ -83,6 +83,7 @@ def _compress_tree_state(state: dict):
     return {
         "max_depth": state["max_depth"],
         "node_count": state["node_count"],
+        "is_leaf": is_leaf,
         "children_left": children_left,
         "children_right": children_right,
         "features": features,
@@ -102,29 +103,32 @@ def _decompress_tree_state(state: dict):
     assert state.keys() == {
         "max_depth",
         "node_count",
+        "is_leaf",
         "children_left",
         "children_right",
         "features",
         "thresholds",
         "values",
     }
-    children_left = state["children_left"].astype(np.int64)
-    n_edges = len(children_left)
-    is_leaf = children_left == -1
+    is_leaf = state["is_leaf"]
     is_not_leaf = np.logical_not(is_leaf)
+    n_nodes = len(is_leaf)
 
-    children_right = np.zeros(n_edges, dtype=np.int64)
-    features = np.zeros(n_edges, dtype=np.int64)
-    thresholds = np.zeros(n_edges, dtype=np.float64)
-    # same shape as values but with all edges instead of only the leaves
-    values = np.zeros((n_edges, *state["values"].shape[1:]), dtype=np.float64)
+    children_left = np.zeros(n_nodes, dtype=np.int64)
+    children_right = np.zeros(n_nodes, dtype=np.int64)
+    features = np.zeros(n_nodes, dtype=np.int64)
+    thresholds = np.zeros(n_nodes, dtype=np.float64)
+    # same shape as values but with all nodes instead of only the leaves
+    values = np.zeros((n_nodes, *state["values"].shape[1:]), dtype=np.float64)
 
+    children_left[is_not_leaf] = state["children_left"]
+    children_left[is_leaf] = -1
     children_right[is_not_leaf] = state["children_right"]
     children_right[is_leaf] = -1
     features[is_not_leaf] = state["features"]
     features[is_leaf] = -2  # feature of leaves is -2
     thresholds[is_not_leaf] = decompress_half_int_float_array(state["thresholds"])
-    thresholds[is_leaf] = -2  # threshold of leaves is -2
+    thresholds[is_leaf] = -2.0  # threshold of leaves is -2
     values[is_leaf] = state["values"]
 
     dtype = np.dtype(
@@ -138,7 +142,7 @@ def _decompress_tree_state(state: dict):
             ("weighted_n_node_samples", "<f8"),
         ]
     )
-    nodes = np.zeros(n_edges, dtype=dtype)
+    nodes = np.zeros(n_nodes, dtype=dtype)
     nodes["left_child"] = children_left
     nodes["right_child"] = children_right
     nodes["feature"] = features
