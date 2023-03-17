@@ -53,3 +53,16 @@ jobs:
           python-version: 3.11
       - name: Run pre-commit checks
         uses: pre-commit/action@v3.0.0
+
+  lint-workflow-files:
+    name: "Lint workflow files"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v3
+      # https://github.com/rhysd/actionlint/blob/main/docs/usage.md#use-actionlint-on-github-actions
+      - name: Download actionlint
+        id: get_actionlint
+        run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+      - name: Check workflow files
+        run: ${{ steps.get_actionlint.outputs.executable }} -color
