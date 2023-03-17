@@ -22,7 +22,7 @@ jobs:
         env:
           cache-name: benchmark-model-cache
         with:
-          path: ~/examples/benchmark_models
+          path: examples/benchmark_models
           key: models-${{ hashFiles('benchmark.py') }}
       - name: Run benchmark
         shell: bash -el {0}
