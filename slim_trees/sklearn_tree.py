@@ -101,10 +101,11 @@ def _compress_tree_state(state: dict):
     children_right = children_right[~is_leaf]
     features = nodes["feature"][~is_leaf]
     # value is irrelevant when node not a leaf
-    values = state["values"][is_leaf]
+    values = state["values"][is_leaf].astype("float32")
     # do lossless compression for thresholds by downcasting half ints (e.g. 5.5, 10.5, ...) to int8
-    thresholds = nodes["threshold"][~is_leaf]
+    thresholds = nodes["threshold"][~is_leaf].astype("float64")
     thresholds = compress_half_int_float_array(thresholds)
+    thresholds["is_compressible"] = _shrink_array(thresholds["is_compressible"])
 
     return {
         "max_depth": state["max_depth"],
@@ -152,6 +153,9 @@ def _decompress_tree_state(state: dict):
     children_right[is_leaf] = -1
     features[~is_leaf] = _unshrink_array(state["features"])
     features[is_leaf] = -2  # feature of leaves is -2
+    state["thresholds"]["is_compressible"] = _unshrink_array(
+        state["thresholds"]["is_compressible"]
+    )
     thresholds[~is_leaf] = decompress_half_int_float_array(state["thresholds"])
     thresholds[is_leaf] = -2.0  # threshold of leaves is -2
     values[is_leaf] = state["values"]
