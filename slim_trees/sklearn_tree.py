@@ -118,7 +118,7 @@ def _decompress_tree_state(state: dict):
     # same shape as values but with all nodes instead of only the leaves
     values = np.zeros((n_nodes, *state["values"].shape[1:]), dtype=np.float64)
 
-    is_leaf = np.unpackbits(state["is_leaf"], count=n_nodes)
+    is_leaf = np.unpackbits(state["is_leaf"], count=n_nodes).astype("bool")
     children_left[~is_leaf] = state["children_left"]
     children_left[is_leaf] = -1
     children_right[~is_leaf] = state["children_right"]
