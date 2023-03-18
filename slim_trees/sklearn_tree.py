@@ -45,6 +45,37 @@ def _tree_unpickle(reconstructor, args, compressed_state):
     return tree
 
 
+def _shrink_array(arr):
+    dtype = arr.dtype
+    assert dtype == "bool" or str(dtype).startswith("int")
+    len_ = len(arr)
+    if dtype == "bool":
+        min_val = None
+    else:
+        min_val = arr.min()
+        arr = arr - min_val
+    max_value = arr.max()
+    if max_value <= 1:
+        arr = np.packbits(arr)
+        is_packed = True
+    else:
+        is_packed = False
+        arr2 = arr.astype(np.min_scalar_type(max_value))
+        assert np.array_equal(arr, arr2)
+        arr = arr2
+    return (len_, dtype, min_val, is_packed, arr)
+
+
+def _unshrink_array(tpl):
+    len_, dtype, min_val, is_packed, arr = tpl
+    if is_packed:
+        arr = np.unpackbits(arr, count=len_)
+    arr = arr.astype(dtype)
+    if min_val is not None:
+        arr = arr + min_val
+    return arr
+
+
 def _compress_tree_state(state: dict):
     """
     Compresses a Tree state.
@@ -57,10 +88,6 @@ def _compress_tree_state(state: dict):
     # nodes is a numpy array of tuples of the following form
     # (left_child, right_child, feature, threshold, impurity, n_node_samples,
     #  weighted_n_node_samples)
-    dtype_child = np.uint16
-    dtype_feature = np.uint16
-    dtype_threshold = np.float64
-    dtype_value = np.float32
 
     children_left = nodes["left_child"]
     children_right = nodes["right_child"]
@@ -70,22 +97,22 @@ def _compress_tree_state(state: dict):
     assert np.array_equal(is_leaf, children_right == -1)
 
     # feature, threshold and children are irrelevant when leaf
-    children_left = children_left[~is_leaf].astype(dtype_child)
-    children_right = children_right[~is_leaf].astype(dtype_child)
-    features = nodes["feature"][~is_leaf].astype(dtype_feature)
+    children_left = children_left[~is_leaf]
+    children_right = children_right[~is_leaf]
+    features = nodes["feature"][~is_leaf]
     # value is irrelevant when node not a leaf
-    values = state["values"][is_leaf].astype(dtype_value)
+    values = state["values"][is_leaf]
     # do lossless compression for thresholds by downcasting half ints (e.g. 5.5, 10.5, ...) to int8
-    thresholds = nodes["threshold"][~is_leaf].astype(dtype_threshold)
+    thresholds = nodes["threshold"][~is_leaf]
     thresholds = compress_half_int_float_array(thresholds)
 
     return {
         "max_depth": state["max_depth"],
         "node_count": state["node_count"],
-        "is_leaf": np.packbits(is_leaf),
-        "children_left": children_left,
-        "children_right": children_right,
-        "features": features,
+        "is_leaf": _shrink_array(is_leaf),
+        "children_left": _shrink_array(children_left),
+        "children_right": _shrink_array(children_right),
+        "features": _shrink_array(features),
         "thresholds": thresholds,
         "values": values,
     }
@@ -118,12 +145,12 @@ def _decompress_tree_state(state: dict):
     # same shape as values but with all nodes instead of only the leaves
     values = np.zeros((n_nodes, *state["values"].shape[1:]), dtype=np.float64)
 
-    is_leaf = np.unpackbits(state["is_leaf"], count=n_nodes).astype("bool")
-    children_left[~is_leaf] = state["children_left"]
+    is_leaf = _unshrink_array(state["is_leaf"])
+    children_left[~is_leaf] = _unshrink_array(state["children_left"])
     children_left[is_leaf] = -1
-    children_right[~is_leaf] = state["children_right"]
+    children_right[~is_leaf] = _unshrink_array(state["children_right"])
     children_right[is_leaf] = -1
-    features[~is_leaf] = state["features"]
+    features[~is_leaf] = _unshrink_array(state["features"])
     features[is_leaf] = -2  # feature of leaves is -2
     thresholds[~is_leaf] = decompress_half_int_float_array(state["thresholds"])
     thresholds[is_leaf] = -2.0  # threshold of leaves is -2
