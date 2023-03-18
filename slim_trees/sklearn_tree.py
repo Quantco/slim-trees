@@ -46,34 +46,35 @@ def _tree_unpickle(reconstructor, args, compressed_state):
 
 
 def _shrink_array(arr):
-    dtype = arr.dtype
-    assert dtype == "bool" or str(dtype).startswith("int")
-    len_ = len(arr)
-    if dtype == "bool":
-        min_val = None
+    if arr.dtype == "bool":
+        return (np.packbits(arr).tobytes(), len(arr))
     else:
+        dtype = arr.dtype
+        assert str(dtype).startswith(("int", "uint"))
         min_val = arr.min()
-        arr = arr - min_val
-    max_value = arr.max()
-    if max_value <= 1:
-        arr = np.packbits(arr)
-        is_packed = True
-    else:
-        is_packed = False
-        arr2 = arr.astype(np.min_scalar_type(max_value))
-        assert np.array_equal(arr, arr2)
-        arr = arr2
-    return (len_, dtype, min_val, is_packed, arr)
+        if min_val < 0:
+            arr = arr - min_val
+        arr = arr.astype(np.min_scalar_type(arr.max()))
+        if min_val < 0:
+            return (dtype, min_val, arr)
+        else:
+            return (dtype, arr)
 
 
 def _unshrink_array(tpl):
-    len_, dtype, min_val, is_packed, arr = tpl
-    if is_packed:
-        arr = np.unpackbits(arr, count=len_)
-    arr = arr.astype(dtype)
-    if min_val is not None:
-        arr = arr + min_val
-    return arr
+    if isinstance(tpl, np.ndarray):
+        return tpl
+    if isinstance(tpl[0], bytes):
+        bytes_, len_ = tpl
+        return np.unpackbits(np.frombuffer(bytes_, dtype="uint8"), count=len_).astype(
+            "bool"
+        )
+    elif len(tpl) == 3:  # noqa
+        dtype, min_val, arr = tpl
+        arr += min_val
+    else:
+        dtype, arr = tpl
+    return arr.astype(dtype)
 
 
 def _compress_tree_state(state: dict):
