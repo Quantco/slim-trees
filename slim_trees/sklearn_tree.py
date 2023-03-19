@@ -66,24 +66,23 @@ def _compress_tree_state(state: dict):
     children_right = nodes["right_child"]
 
     is_leaf = children_left == -1
-    is_not_leaf = np.logical_not(is_leaf)
     # assert that the leaves are the same no matter if you use children_left or children_right
     assert np.array_equal(is_leaf, children_right == -1)
 
     # feature, threshold and children are irrelevant when leaf
-    children_left = children_left[is_not_leaf].astype(dtype_child)
-    children_right = children_right[is_not_leaf].astype(dtype_child)
-    features = nodes["feature"][is_not_leaf].astype(dtype_feature)
+    children_left = children_left[~is_leaf].astype(dtype_child)
+    children_right = children_right[~is_leaf].astype(dtype_child)
+    features = nodes["feature"][~is_leaf].astype(dtype_feature)
     # value is irrelevant when node not a leaf
     values = state["values"][is_leaf].astype(dtype_value)
     # do lossless compression for thresholds by downcasting half ints (e.g. 5.5, 10.5, ...) to int8
-    thresholds = nodes["threshold"][is_not_leaf].astype(dtype_threshold)
+    thresholds = nodes["threshold"][~is_leaf].astype(dtype_threshold)
     thresholds = compress_half_int_float_array(thresholds)
 
     return {
         "max_depth": state["max_depth"],
         "node_count": state["node_count"],
-        "is_leaf": is_leaf,
+        "is_leaf": np.packbits(is_leaf),
         "children_left": children_left,
         "children_right": children_right,
         "features": features,
@@ -110,9 +109,7 @@ def _decompress_tree_state(state: dict):
         "thresholds",
         "values",
     }
-    is_leaf = state["is_leaf"]
-    is_not_leaf = np.logical_not(is_leaf)
-    n_nodes = len(is_leaf)
+    n_nodes = state["node_count"]
 
     children_left = np.zeros(n_nodes, dtype=np.int64)
     children_right = np.zeros(n_nodes, dtype=np.int64)
@@ -121,13 +118,14 @@ def _decompress_tree_state(state: dict):
     # same shape as values but with all nodes instead of only the leaves
     values = np.zeros((n_nodes, *state["values"].shape[1:]), dtype=np.float64)
 
-    children_left[is_not_leaf] = state["children_left"]
+    is_leaf = np.unpackbits(state["is_leaf"], count=n_nodes).astype("bool")
+    children_left[~is_leaf] = state["children_left"]
     children_left[is_leaf] = -1
-    children_right[is_not_leaf] = state["children_right"]
+    children_right[~is_leaf] = state["children_right"]
     children_right[is_leaf] = -1
-    features[is_not_leaf] = state["features"]
+    features[~is_leaf] = state["features"]
     features[is_leaf] = -2  # feature of leaves is -2
-    thresholds[is_not_leaf] = decompress_half_int_float_array(state["thresholds"])
+    thresholds[~is_leaf] = decompress_half_int_float_array(state["thresholds"])
     thresholds[is_leaf] = -2.0  # threshold of leaves is -2
     values[is_leaf] = state["values"]
 
