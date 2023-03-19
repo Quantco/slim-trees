@@ -29,13 +29,12 @@ def compress_half_int_float_array(a, compression_dtype="int8"):
     info = np.iinfo(compression_dtype)
     a2 = 2.0 * a
     is_compressible = _is_in_neighborhood_of_int(a2, info)
-    not_compressible = np.logical_not(is_compressible)
 
     a2_compressible = a2[is_compressible].astype(compression_dtype)
-    a_incompressible = a[not_compressible]
+    a_incompressible = a[~is_compressible]
 
     state = {
-        "is_compressible": is_compressible,
+        "is_compressible": np.packbits(is_compressible),
         "a2_compressible": a2_compressible,
         "a_incompressible": a_incompressible,
     }
@@ -44,8 +43,11 @@ def compress_half_int_float_array(a, compression_dtype="int8"):
 
 
 def decompress_half_int_float_array(state):
-    is_compressible = state["is_compressible"]
+    n_thresholds = len(state["a2_compressible"]) + len(state["a_incompressible"])
+    is_compressible = np.unpackbits(
+        state["is_compressible"], count=n_thresholds
+    ).astype("bool")
     a = np.zeros(len(is_compressible), dtype="float64")
     a[is_compressible] = state["a2_compressible"] / 2.0
-    a[np.logical_not(is_compressible)] = state["a_incompressible"]
+    a[~is_compressible] = state["a_incompressible"]
     return a
