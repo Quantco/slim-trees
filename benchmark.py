@@ -39,7 +39,8 @@ def train_gb_sklearn() -> GradientBoostingRegressor:
 
 def train_model_sklearn() -> RandomForestRegressor:
     return load_model(
-        "rf_sklearn", lambda: RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
+        "rf_sklearn",
+        lambda: RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1),
     )
 
 
