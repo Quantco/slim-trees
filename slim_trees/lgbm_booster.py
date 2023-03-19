@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 
-from slim_trees.utils import pq_bytes_to_df, pyarrow_table_to_bytes
+from slim_trees import __version__ as slim_trees_version
+from slim_trees.utils import check_version, pq_bytes_to_df, pyarrow_table_to_bytes
 
 try:
     from lightgbm.basic import Booster
@@ -29,12 +30,19 @@ def _booster_pickle(booster: Booster):
     assert isinstance(booster, Booster)
     reconstructor, args, state = booster.__reduce__()
     compressed_state = _compress_booster_state(state)
-    return _booster_unpickle, (reconstructor, args, compressed_state)
+    return _booster_unpickle, (
+        reconstructor,
+        args,
+        (slim_trees_version, compressed_state),
+    )
 
 
 def _booster_unpickle(reconstructor, args, compressed_state):
+    version, state = compressed_state
+    check_version(version)
+
     booster = reconstructor(*args)
-    decompressed_state = _decompress_booster_state(compressed_state)
+    decompressed_state = _decompress_booster_state(state)
     booster.__setstate__(decompressed_state)
     return booster
 

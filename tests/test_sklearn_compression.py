@@ -4,10 +4,16 @@ import numpy as np
 import pytest
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
-from test_util import get_dump_times, get_load_times
+from util import (
+    assert_version_pickle,
+    assert_version_unpickle,
+    get_dump_times,
+    get_load_times,
+)
 
 from slim_trees import dump_sklearn_compressed
 from slim_trees.pickling import dump_compressed, load_compressed
+from slim_trees.sklearn_tree import _tree_pickle
 
 
 @pytest.fixture
@@ -27,7 +33,7 @@ def decision_tree_regressor(rng):
 
 def test_compressed_predictions(diabetes_toy_df, random_forest_regressor, tmp_path):
     X, y = diabetes_toy_df
-    random_forest_regressor.fit(X, y)
+    random_forest_regressor.fit(*diabetes_toy_df)
 
     model_path = tmp_path / "model_compressed.pickle.lzma"
     dump_sklearn_compressed(random_forest_regressor, model_path)
@@ -108,6 +114,16 @@ def test_load_times(
     )
     factor = 4 if compression_method == "no" else 1.5
     assert load_time_compressed < factor * load_time_uncompressed
+
+
+def test_tree_version_pickle(diabetes_toy_df, decision_tree_regressor):
+    decision_tree_regressor.fit(*diabetes_toy_df)
+    assert_version_pickle(_tree_pickle, decision_tree_regressor.tree_)
+
+
+def test_tree_version_unpickle(diabetes_toy_df, decision_tree_regressor):
+    decision_tree_regressor.fit(*diabetes_toy_df)
+    assert_version_unpickle(_tree_pickle, decision_tree_regressor.tree_)
 
 
 # todo add tests for large models

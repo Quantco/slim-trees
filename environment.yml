@@ -10,6 +10,6 @@ dependencies:
   - pandas
   - scikit-learn
   - pyarrow
-  - pytest
+  - pytest>=7.0
   - setuptools_scm
   - tbump

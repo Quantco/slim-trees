@@ -1,8 +1,19 @@
 import io
+import warnings
 
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+
+from slim_trees import __version__ as slim_trees_version
+
+
+def check_version(version: str):
+    if version != slim_trees_version:
+        warnings.warn(
+            f"Version mismatch: slim_trees version {slim_trees_version} "
+            f"does not match version {version} of the model."
+        )
 
 
 def pyarrow_table_to_bytes(table: pa.Table) -> bytes:
