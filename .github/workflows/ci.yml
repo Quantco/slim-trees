@@ -64,5 +64,6 @@ jobs:
       - name: Download actionlint
         id: get_actionlint
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+      - uses: mxschmitt/action-tmate@v3
       - name: Check workflow files
         run: ${{ steps.get_actionlint.outputs.executable }} -color
