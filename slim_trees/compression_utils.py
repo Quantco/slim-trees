@@ -1,6 +1,12 @@
 import numpy as np
 
 
+def safe_cast(arr: np.array, dtype):
+    if np.can_cast(arr.max(), dtype) and np.can_cast(arr.min(), dtype):
+        return arr.astype(dtype)
+    raise ValueError(f"Cannot cast array to {dtype}.")
+
+
 def _is_in_neighborhood_of_int(arr, iinfo, eps=1e-12):
     """
     Checks if the numbers are around an integer.

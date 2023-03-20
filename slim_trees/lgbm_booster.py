@@ -11,6 +11,7 @@ from slim_trees import __version__ as slim_trees_version
 from slim_trees.compression_utils import (
     compress_half_int_float_array,
     decompress_half_int_float_array,
+    safe_cast,
 )
 from slim_trees.utils import check_version
 
@@ -102,6 +103,10 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
         feats_map = dict(_extract_feature(fl) for fl in features)
 
         def parse(str_list, dtype):
+            if np.can_cast(dtype, np.int64):
+                int64_array = np.array(str_list, dtype=np.int64)
+                return safe_cast(int64_array, dtype)
+            assert np.can_cast(dtype, np.float64)
             return np.array(str_list, dtype=dtype)
 
         split_feature_dtype = np.int16
