@@ -38,5 +38,5 @@ jobs:
         with:
           filePath: benchmark.md
           comment_tag: benchmark
-      - name: Add benchmark to Job Summary
+      - name: "Add benchmark to Job Summary"
         run: cat benchmark.md >> $GITHUB_STEP_SUMMARY
