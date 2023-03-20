@@ -53,11 +53,12 @@ def train_gbdt_lgbm() -> lgb.LGBMRegressor:
 
 def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
     return load_model(
-        "gbdt_large_lgbm", lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42)
+        "gbdt_large_lgbm",
+        lambda: lgb.LGBMRegressor(n_estimators=20000, random_state=42),
     )
 
 
-def load_rf_lgbm() -> lgb.LGBMRegressor:
+def train_rf_lgbm() -> lgb.LGBMRegressor:
     return load_model(
         "rg_lgbm",
         lambda: lgb.LGBMRegressor(
@@ -67,6 +68,7 @@ def load_rf_lgbm() -> lgb.LGBMRegressor:
             random_state=42,
             bagging_freq=5,
             bagging_fraction=0.5,
+            verbose=-1,
         ),
     )
 
@@ -217,8 +219,8 @@ if __name__ == "__main__":
         ("LGBM gbdt LZMA", train_gbdt_lgbm) + dumps_lgbm_lzma_args,
         ("LGBM gbdt large", train_gbdt_large_lgbm) + dumps_lgbm_args,
         ("LGBM gbdt large LZMA", train_gbdt_large_lgbm) + dumps_lgbm_lzma_args,
-        ("LGBM rf", load_rf_lgbm) + dumps_lgbm_args,
-        ("LGBM rf LZMA", load_rf_lgbm) + dumps_lgbm_lzma_args,
+        ("LGBM rf", train_rf_lgbm) + dumps_lgbm_args,
+        ("LGBM rf LZMA", train_rf_lgbm) + dumps_lgbm_lzma_args,
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
     print("Base results / Our results / Change")
