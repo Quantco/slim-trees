@@ -1,5 +1,8 @@
 name: Benchmark
-on: pull_request
+on:
+  - pull_request:
+  - push:
+      branches: [main]
 permissions:
   pull-requests: write
   contents: read
@@ -29,8 +32,11 @@ jobs:
         run: |
           echo "_(benchmark **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_" >> benchmark.md
           python benchmark.py >> benchmark.md
-      - name: Comment PR
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@v2
         with:
           filePath: benchmark.md
           comment_tag: benchmark
+      - name: Add benchmark to Job Summary
+        run: cat benchmark.md >> $GITHUB_STEP_SUMMARY
