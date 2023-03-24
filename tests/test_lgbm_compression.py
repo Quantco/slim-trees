@@ -64,14 +64,14 @@ def test_dump_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_metho
 def test_load_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_method):
     lgbm_regressor.fit(*diabetes_toy_df)
 
-    load_time_compressed, load_time_uncompressed = get_load_times(
+    time_compressed, time_uncompressed = get_load_times(
         lgbm_regressor, dump_lgbm_compressed, tmp_path, compression_method
     )
     factor = 35 if compression_method == "no" else 15
     # compressed should only take [factor] times longer than uncompressed
     assert (
-        load_time_compressed / load_time_uncompressed < factor
-    ), f"{load_time_compressed / load_time_uncompressed:.2f} > {factor}"
+        time_compressed / time_uncompressed < factor
+    ), f"{time_compressed / time_uncompressed:.2f} > {factor}"
 
 
 def test_tree_version_pickle(diabetes_toy_df, lgbm_regressor):

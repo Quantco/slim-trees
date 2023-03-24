@@ -7,10 +7,9 @@ from typing import Any, BinaryIO, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import pyarrow as pa
 
 from slim_trees import __version__ as slim_trees_version
-from slim_trees.utils import check_version, pq_bytes_to_df, pyarrow_table_to_bytes
+from slim_trees.utils import check_version, df_to_pq_bytes, pq_bytes_to_df
 
 FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
 BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
@@ -74,6 +73,10 @@ def _extract_feature(feature_line):
     return feat_name, values_str.split(" ")
 
 
+def parse(str_list, dtype):
+    return np.array(str_list, dtype=dtype)
+
+
 split_feature_dtype = np.int16
 threshold_dtype = np.float64
 decision_type_dtype = np.int8
@@ -91,14 +94,14 @@ def _compress_booster_handle(
     front_str_match = re.search(FRONT_STRING_REGEX, model_string)
     if front_str_match is None:
         raise ValueError("Could not find front string.")
-    front_str = front_str_match.group()
     # todo calculate correct tree_sizes
-    front_str = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str)
+    front_str = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str_match.group())
 
     back_str_match = re.search(BACK_STRING_REGEX, model_string)
     if back_str_match is None:
         raise ValueError("Could not find back string.")
     back_str = back_str_match.group()
+
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
     node_features: List[dict] = []
     leaf_values: List[dict] = []
@@ -107,15 +110,12 @@ def _compress_booster_handle(
     for i, tree_match in enumerate(tree_matches):
         tree_name, features_list = tree_match
         _, tree_idx = tree_name.replace("\n", "").split("=")
-        assert int(tree_idx) == i
 
         # extract features -- filter out empty ones
         features = [f for f in features_list.split("\n") if "=" in f]
         feats_map = dict(_extract_feature(fl) for fl in features)
 
-        def parse(str_list, dtype):
-            return np.array(str_list, dtype=dtype)
-
+        assert int(tree_idx) == i
         assert len(feats_map["num_leaves"]) == 1
         assert len(feats_map["num_cat"]) == 1
         assert len(feats_map["is_linear"]) == 1
@@ -156,9 +156,9 @@ def _compress_booster_handle(
         )
 
         # length = sum_l=0^{num_leaves} {num_features(l)}
-        # attributes: leaf_features, leaf_coeff
+        # attributes: leaf_features, leaf_coeff, leaf_const, num_features\
+        # TODO: some of these attributes, e.g. leaf_const, might not be needed
         if "leaf_features" in feats_map:
-            # append to node_features: leaf_const and num_features
             leaf_values[-1]["leaf_const"] = parse(
                 feats_map["leaf_const"], leaf_value_dtype
             )
@@ -169,7 +169,7 @@ def _compress_booster_handle(
                     "tree_idx": int(tree_idx),
                     "leaf_features": parse(
                         [s if s else None for s in feats_map["leaf_features"]],
-                        np.float64,
+                        np.float32,
                     ),
                     "leaf_coeff": parse(
                         [s if s else None for s in feats_map["leaf_coeff"]], np.float64
@@ -177,50 +177,44 @@ def _compress_booster_handle(
                 }
             )
 
-    trees_df = pd.DataFrame(trees)
-    trees_table = pa.Table.from_pandas(trees_df)
-    trees_df_bytes = pyarrow_table_to_bytes(trees_table)
+    tree_value_bytes = df_to_pq_bytes(pd.DataFrame(trees))
 
     nodes_df = pd.DataFrame(node_features)
-    nodes_df = nodes_df.explode(
-        [
-            "node_idx",
-            "split_feature",
-            "threshold",
-            "decision_type",
-            "left_child",
-            "right_child",
-            # "leaf_value",
-        ]
+    node_values_bytes = df_to_pq_bytes(
+        nodes_df.explode(
+            [
+                "node_idx",
+                "split_feature",
+                "threshold",
+                "decision_type",
+                "left_child",
+                "right_child",
+            ]
+        )
     )
-    nodes_table = pa.Table.from_pandas(nodes_df)
-    nodes_df_bytes = pyarrow_table_to_bytes(nodes_table)
 
-    leaf_values_df = pd.DataFrame(leaf_values).explode(
-        ["leaf_value"] + (["leaf_const", "num_features"] if linear_values else [])
+    leaf_values_bytes = df_to_pq_bytes(
+        pd.DataFrame(leaf_values).explode(
+            ["leaf_value"] + (["leaf_const", "num_features"] if linear_values else [])
+        )
     )
-    leaf_values_table = pa.Table.from_pandas(leaf_values_df)
-    leaf_values_bytes = pyarrow_table_to_bytes(leaf_values_table)
 
     linear_values_bytes = None
     if linear_values:
-        linear_values_df = pd.DataFrame(linear_values).explode(
-            ["leaf_features", "leaf_coeff"]
+        linear_values_bytes = df_to_pq_bytes(
+            pd.DataFrame(linear_values).explode(["leaf_features", "leaf_coeff"])
         )
-        linear_values_table = pa.Table.from_pandas(linear_values_df)
-        linear_values_bytes = pyarrow_table_to_bytes(linear_values_table)
 
     return (
         front_str,
-        trees_df_bytes,
-        nodes_df_bytes,
+        tree_value_bytes,
+        node_values_bytes,
         leaf_values_bytes,
         linear_values_bytes,
         back_str,
     )
 
 
-# @profile
 def _decompress_booster_handle(
     compressed_state: Tuple[str, bytes, bytes, bytes, bytes, str]
 ) -> str:

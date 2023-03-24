@@ -32,3 +32,10 @@ def pq_bytes_to_df(bytes_: bytes) -> pd.DataFrame:
     Given a .parquet file as bytes, return a pandas DataFrame.
     """
     return pd.read_parquet(io.BytesIO(bytes_))
+
+
+def df_to_pq_bytes(df: pd.DataFrame) -> bytes:
+    """
+    Given a pandas DataFrame, return a .parquet file as bytes.
+    """
+    return pyarrow_table_to_bytes(pa.Table.from_pandas(df))
