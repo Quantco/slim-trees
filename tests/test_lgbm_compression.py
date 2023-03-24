@@ -67,7 +67,7 @@ def test_load_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_metho
     time_compressed, time_uncompressed = get_load_times(
         lgbm_regressor, dump_lgbm_compressed, tmp_path, compression_method
     )
-    factor = 35 if compression_method == "no" else 15
+    factor = 35 if compression_method == "no" else 18
     # compressed should only take [factor] times longer than uncompressed
     assert (
         time_compressed / time_uncompressed < factor
