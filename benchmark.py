@@ -38,6 +38,15 @@ def train_gb_sklearn() -> GradientBoostingRegressor:
     )
 
 
+def train_large_tree_sklearn() -> RandomForestRegressor:
+    return load_model(
+        "rf_sklearn_large",
+        lambda: RandomForestRegressor(
+            n_estimators=1500, max_leaf_nodes=10000, random_state=42, n_jobs=-1
+        ),
+    )
+
+
 def train_model_sklearn() -> RandomForestRegressor:
     return load_model(
         "rf_sklearn",
@@ -74,12 +83,9 @@ def train_rf_lgbm() -> lgb.LGBMRegressor:
 
 
 def benchmark(func: Callable, *args, **kwargs) -> float:
-    times = []
-    for _ in range(5):
-        start = time.perf_counter()
-        func(*args, **kwargs)
-        times.append(time.perf_counter() - start)
-    return min(times)
+    start = time.perf_counter()
+    func(*args, **kwargs)
+    return time.perf_counter() - start
 
 
 def benchmark_model(  # noqa: PLR0913
@@ -213,6 +219,8 @@ if __name__ == "__main__":
     models_to_benchmark = [
         ("sklearn rf", train_model_sklearn) + dumps_sklearn_args,
         ("sklearn rf LZMA", train_model_sklearn) + dumps_sklearn_lzma_args,
+        ("sklearn rf large", train_large_tree_sklearn) + dumps_sklearn_args,
+        ("sklearn rf large LZMA", train_large_tree_sklearn) + dumps_sklearn_lzma_args,
         ("sklearn gb", train_gb_sklearn) + dumps_sklearn_args,
         ("sklearn gb LZMA", train_gb_sklearn) + dumps_sklearn_lzma_args,
         ("LGBM gbdt", train_gbdt_lgbm) + dumps_lgbm_args,
