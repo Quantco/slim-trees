@@ -1,10 +1,37 @@
 import numpy as np
+import pytest
 
 from slim_trees.compression import (
     _is_in_neighborhood_of_int,
     compress_half_int_float_array,
     decompress_half_int_float_array,
+    safe_cast,
 )
+
+
+@pytest.mark.parametrize(
+    "arr,dtype",
+    [
+        (np.array([1, 2, 3, 4, 5]), np.int8),
+        (np.array([1, 2, 3, 4, 5]), np.uint8),
+        (np.array([1, 2, 3, 4, 5]), np.int16),
+        (np.array([200]), np.uint16),
+    ],
+)
+def test_safe_cast(arr, dtype):
+    safe_cast(arr, dtype)
+
+
+@pytest.mark.parametrize(
+    "arr,dtype",
+    [
+        (np.array([1, 2, 3, 555555]), np.int16),
+        (np.array([-1, 4, 6]), np.uint32),
+    ],
+)
+def test_safe_cast_error(arr, dtype):
+    with pytest.raises(ValueError):
+        safe_cast(arr, dtype)
 
 
 def test_compress_half_int_float_array():

@@ -5,6 +5,7 @@ from slim_trees import __version__ as slim_trees_version
 from slim_trees.compression import (
     compress_half_int_float_array,
     decompress_half_int_float_array,
+    safe_cast,
 )
 from slim_trees.utils import check_version
 
@@ -70,11 +71,12 @@ def _compress_tree_state(state: dict):
     assert np.array_equal(is_leaf, children_right == -1)
 
     # feature, threshold and children are irrelevant when leaf
-    children_left = children_left[~is_leaf].astype(dtype_child)
-    children_right = children_right[~is_leaf].astype(dtype_child)
-    features = nodes["feature"][~is_leaf].astype(dtype_feature)
+
+    children_left = safe_cast(children_left[~is_leaf], dtype_child)
+    children_right = safe_cast(children_right[~is_leaf], dtype_child)
+    features = safe_cast(nodes["feature"][~is_leaf], dtype_feature)
     # value is irrelevant when node not a leaf
-    values = state["values"][is_leaf].astype(dtype_value)
+    values = safe_cast(state["values"][is_leaf], dtype_value)
     # do lossless compression for thresholds by downcasting half ints (e.g. 5.5, 10.5, ...) to int8
     thresholds = nodes["threshold"][~is_leaf].astype(dtype_threshold)
     thresholds = compress_half_int_float_array(thresholds)

@@ -9,6 +9,9 @@ import numpy as np
 import pandas as pd
 
 from slim_trees import __version__ as slim_trees_version
+from slim_trees.compression import (
+    safe_cast,
+)
 from slim_trees.utils import check_version, df_to_pq_bytes, pq_bytes_to_df
 
 FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
@@ -81,6 +84,10 @@ def _extract_feature(feature_line: str) -> Tuple[str, List[str]]:
 
 
 def parse(str_list, dtype):
+    if np.can_cast(dtype, np.int64):
+        int64_array = np.array(str_list, dtype=np.int64)
+        return safe_cast(int64_array, dtype)
+    assert np.can_cast(dtype, np.float64)
     return np.array(str_list, dtype=dtype)
 
 
@@ -106,7 +113,7 @@ def _compress_booster_handle(
     leaf_values: List[dict] = []
     trees: List[dict] = []
     linear_values: List[dict] = []
-    for i, tree_match in enumerate(tree_matches):
+    for _i, tree_match in enumerate(tree_matches):
         tree_name, features_list = tree_match
         _, tree_idx = tree_name.replace("\n", "").split("=")
 
@@ -114,7 +121,6 @@ def _compress_booster_handle(
         features = [f for f in features_list.split("\n") if "=" in f]
         feats_map = dict(_extract_feature(fl) for fl in features)
 
-        assert int(tree_idx) == i
         assert len(feats_map["num_leaves"]) == 1
         assert len(feats_map["num_cat"]) == 1
         assert len(feats_map["is_linear"]) == 1
