@@ -2,7 +2,7 @@ import os
 import sys
 
 from slim_trees import __version__ as slim_trees_version
-from slim_trees.compression import (
+from slim_trees.compression_utils import (
     compress_half_int_float_array,
     decompress_half_int_float_array,
     safe_cast,

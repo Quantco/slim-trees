@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from slim_trees import __version__ as slim_trees_version
-from slim_trees.compression import (
+from slim_trees.compression_utils import (
     safe_cast,
 )
 from slim_trees.utils import check_version, df_to_pq_bytes, pq_bytes_to_df
