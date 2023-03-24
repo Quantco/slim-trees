@@ -21,7 +21,6 @@ def load_model(model_name: str, generate: Callable) -> Any:
 
     if model_path.exists():
         with open(model_path, "rb") as f:
-            print(f"reloading {model_name}")
             return pickle.load(f)
 
     regressor = generate()
@@ -91,7 +90,6 @@ def benchmark_model(  # noqa: PLR0913
     base_dumps_func=None,
     base_loads_func=None,
 ) -> dict:
-    print(name)
     if loads_func is None:
         loads_func = pickle.loads
     if base_dumps_func is None:

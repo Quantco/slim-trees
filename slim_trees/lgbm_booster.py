@@ -15,6 +15,13 @@ FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
 BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
 TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
 
+SPLIT_FEATURE_DTYPE = np.int16
+THRESHOLD_DTYPE = np.float64
+DECISION_TYPE_DTYPE = np.int8
+LEFT_CHILD_DTYPE = np.int16
+RIGHT_CHILD_DTYPE = LEFT_CHILD_DTYPE
+LEAF_VALUE_DTYPE = np.float64
+
 try:
     from lightgbm.basic import Booster
 except ImportError:
@@ -68,21 +75,13 @@ def _decompress_booster_state(compressed_state: dict):
     return state
 
 
-def _extract_feature(feature_line):
+def _extract_feature(feature_line: str) -> Tuple[str, List[str]]:
     feat_name, values_str = feature_line.split("=")
     return feat_name, values_str.split(" ")
 
 
 def parse(str_list, dtype):
     return np.array(str_list, dtype=dtype)
-
-
-split_feature_dtype = np.int16
-threshold_dtype = np.float64
-decision_type_dtype = np.int8
-left_child_dtype = np.int16
-right_child_dtype = left_child_dtype
-leaf_value_dtype = np.float64
 
 
 def _compress_booster_handle(
@@ -127,7 +126,6 @@ def _compress_booster_handle(
                 "tree_idx": int(tree_idx),
                 "num_leaves": int(feats_map["num_leaves"][0]),
                 "num_cat": int(feats_map["num_cat"][0]),
-                # "last_leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype)[-1],
                 "is_linear": int(feats_map["is_linear"][0]),
                 "shrinkage": float(feats_map["shrinkage"][0]),
             }
@@ -137,13 +135,12 @@ def _compress_booster_handle(
         node_features.append(
             {
                 "tree_idx": int(tree_idx),
-                "node_idx": list(range(int(feats_map["num_leaves"][0]) - 1)),
                 # all the upcoming attributes have length num_leaves - 1
-                "split_feature": parse(feats_map["split_feature"], split_feature_dtype),
-                "threshold": parse(feats_map["threshold"], threshold_dtype),
-                "decision_type": parse(feats_map["decision_type"], decision_type_dtype),
-                "left_child": parse(feats_map["left_child"], left_child_dtype),
-                "right_child": parse(feats_map["right_child"], right_child_dtype),
+                "split_feature": parse(feats_map["split_feature"], SPLIT_FEATURE_DTYPE),
+                "threshold": parse(feats_map["threshold"], THRESHOLD_DTYPE),
+                "decision_type": parse(feats_map["decision_type"], DECISION_TYPE_DTYPE),
+                "left_child": parse(feats_map["left_child"], LEFT_CHILD_DTYPE),
+                "right_child": parse(feats_map["right_child"], RIGHT_CHILD_DTYPE),
             }
         )
 
@@ -151,7 +148,7 @@ def _compress_booster_handle(
         leaf_values.append(
             {
                 "tree_idx": int(tree_idx),
-                "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype),
+                "leaf_value": parse(feats_map["leaf_value"], LEAF_VALUE_DTYPE),
             }
         )
 
@@ -160,7 +157,7 @@ def _compress_booster_handle(
         # TODO: some of these attributes, e.g. leaf_const, might not be needed
         if "leaf_features" in feats_map:
             leaf_values[-1]["leaf_const"] = parse(
-                feats_map["leaf_const"], leaf_value_dtype
+                feats_map["leaf_const"], LEAF_VALUE_DTYPE
             )
             leaf_values[-1]["num_features"] = parse(feats_map["num_features"], np.int32)
 
@@ -168,8 +165,8 @@ def _compress_booster_handle(
                 {
                     "tree_idx": int(tree_idx),
                     "leaf_features": parse(
-                        [s if s else None for s in feats_map["leaf_features"]],
-                        np.float32,
+                        [s if s else -1 for s in feats_map["leaf_features"]],
+                        np.int16,
                     ),
                     "leaf_coeff": parse(
                         [s if s else None for s in feats_map["leaf_coeff"]], np.float64
@@ -183,7 +180,6 @@ def _compress_booster_handle(
     node_values_bytes = df_to_pq_bytes(
         nodes_df.explode(
             [
-                "node_idx",
                 "split_feature",
                 "threshold",
                 "decision_type",
@@ -257,7 +253,7 @@ def _decompress_booster_handle(
             linear_str = f"""
 leaf_const={" ".join(str(x) for x in tree['leaf_const'])}
 num_features={" ".join(str(x) for x in tree['num_features'])}
-leaf_features={" ".join(["" if np.isnan(f) else str(int(f)) for f in tree['leaf_features']])}
+leaf_features={" ".join(["" if f == -1 else str(int(f)) for f in tree['leaf_features']])}
 leaf_coeff={" ".join(["" if np.isnan(f) else str(f) for f in tree['leaf_coeff']])}"""
         else:
             linear_str = ""
