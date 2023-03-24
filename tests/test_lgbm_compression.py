@@ -41,7 +41,8 @@ def test_compressed_size(diabetes_toy_df, lgbm_regressor, tmp_path):
     dump_compressed(lgbm_regressor, model_path)
     size_compressed = os.path.getsize(model_path_compressed)
     size = os.path.getsize(model_path)
-    assert size_compressed < 0.7 * size
+    factor = 0.85 if lgbm_regressor.linear_trees else 0.7
+    assert size_compressed < factor * size
 
 
 @pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])

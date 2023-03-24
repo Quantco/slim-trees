@@ -12,6 +12,10 @@ import pyarrow as pa
 from slim_trees import __version__ as slim_trees_version
 from slim_trees.utils import check_version, pq_bytes_to_df, pyarrow_table_to_bytes
 
+FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
+BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
+TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
+
 try:
     from lightgbm.basic import Booster
 except ImportError:
@@ -83,9 +87,6 @@ def _compress_booster_handle(
 ) -> Tuple[str, bytes, bytes, bytes, Optional[bytes], str]:
     if not model_string.startswith("tree\nversion=v3"):
         raise ValueError("Only v3 is supported for the booster string format.")
-    FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
-    BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
-    TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
 
     front_str_match = re.search(FRONT_STRING_REGEX, model_string)
     if front_str_match is None:
@@ -157,6 +158,12 @@ def _compress_booster_handle(
         # length = sum_l=0^{num_leaves} {num_features(l)}
         # attributes: leaf_features, leaf_coeff
         if "leaf_features" in feats_map:
+            # append to node_features: leaf_const and num_features
+            leaf_values[-1]["leaf_const"] = parse(
+                feats_map["leaf_const"], leaf_value_dtype
+            )
+            leaf_values[-1]["num_features"] = parse(feats_map["num_features"], np.int32)
+
             linear_values.append(
                 {
                     "tree_idx": int(tree_idx),
@@ -189,7 +196,9 @@ def _compress_booster_handle(
     nodes_table = pa.Table.from_pandas(nodes_df)
     nodes_df_bytes = pyarrow_table_to_bytes(nodes_table)
 
-    leaf_values_df = pd.DataFrame(leaf_values).explode(["leaf_value"])
+    leaf_values_df = pd.DataFrame(leaf_values).explode(
+        ["leaf_value"] + (["leaf_const", "num_features"] if linear_values else [])
+    )
     leaf_values_table = pa.Table.from_pandas(leaf_values_df)
     leaf_values_bytes = pyarrow_table_to_bytes(leaf_values_table)
 
@@ -229,7 +238,7 @@ def _decompress_booster_handle(
     trees_df = pq_bytes_to_df(trees_df_bytes)
     nodes_df = pq_bytes_to_df(nodes_df_bytes).groupby("tree_idx").agg(lambda x: list(x))
     leaf_values_df = (
-        pq_bytes_to_df(leaf_value_bytes).groupby("tree_idx")["leaf_value"].apply(list)
+        pq_bytes_to_df(leaf_value_bytes).groupby("tree_idx").agg(lambda x: list(x))
     )
 
     # merge trees_df, nodes_df, and leaf_values_df on tree_idx
@@ -252,9 +261,10 @@ def _decompress_booster_handle(
         # add the appropriate block if those values are present
         if tree["is_linear"]:
             linear_str = f"""
+leaf_const={" ".join(str(x) for x in tree['leaf_const'])}
+num_features={" ".join(str(x) for x in tree['num_features'])}
 leaf_features={" ".join(["" if np.isnan(f) else str(int(f)) for f in tree['leaf_features']])}
-leaf_coeff={" ".join(["" if np.isnan(f) else str(f) for f in tree['leaf_coeff']])}
-            """
+leaf_coeff={" ".join(["" if np.isnan(f) else str(f) for f in tree['leaf_coeff']])}"""
         else:
             linear_str = ""
 
@@ -274,8 +284,8 @@ leaf_count={("0 " * num_leaves)[:-1]}
 internal_value={("0 " * num_nodes)[:-1]}
 internal_weight={("0 " * num_nodes)[:-1]}
 internal_count={("0 " * num_nodes)[:-1]}
-is_linear={tree['is_linear']}
-shrinkage={tree['shrinkage']}{linear_str}
+is_linear={tree['is_linear']}{linear_str}
+shrinkage={tree['shrinkage']}
 
 
 """
