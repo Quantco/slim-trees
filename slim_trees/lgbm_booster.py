@@ -83,6 +83,26 @@ def _extract_feature(feature_line: str) -> Tuple[str, List[str]]:
     return feat_name, values_str.split(" ")
 
 
+def _validate_feature_lengths(feats_map: dict):
+    # features on tree-level
+    assert len(feats_map["num_leaves"]) == 1
+    assert len(feats_map["num_cat"]) == 1
+    assert len(feats_map["is_linear"]) == 1
+    assert len(feats_map["shrinkage"]) == 1
+
+    # features on node-level
+    num_leaves = int(feats_map["num_leaves"][0])
+    assert len(feats_map["split_feature"]) == num_leaves - 1
+    assert len(feats_map["threshold"]) == num_leaves - 1
+    assert len(feats_map["decision_type"]) == num_leaves - 1
+    assert len(feats_map["left_child"]) == num_leaves - 1
+    assert len(feats_map["right_child"]) == num_leaves - 1
+
+    # features on leaf-level
+    num_leaves = int(feats_map["num_leaves"][0])
+    assert len(feats_map["leaf_value"]) == num_leaves
+
+
 def parse(str_list, dtype):
     if np.can_cast(dtype, np.int64):
         int64_array = np.array(str_list, dtype=np.int64)
@@ -121,10 +141,8 @@ def _compress_booster_handle(
         features = [f for f in features_list.split("\n") if "=" in f]
         feats_map = dict(_extract_feature(fl) for fl in features)
 
-        assert len(feats_map["num_leaves"]) == 1
-        assert len(feats_map["num_cat"]) == 1
-        assert len(feats_map["is_linear"]) == 1
-        assert len(feats_map["shrinkage"]) == 1
+        # validate that we have the correct lengths
+        _validate_feature_lengths(feats_map)
 
         # length = 1
         trees.append(
