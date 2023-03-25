@@ -22,7 +22,7 @@ def pyarrow_table_to_bytes(table: pa.Table) -> bytes:
     """
     stream = pa.BufferOutputStream()
     pq.write_table(
-        table, stream, compression="lz4", compression_level="16"
+        table, stream, compression="lz4", compression_level=16
     )  # TODO: investigate different effects of compression
     return stream.getvalue().to_pybytes()
 
