@@ -15,6 +15,22 @@ from slim_trees.sklearn_tree import dump_sklearn
 
 MODELS_PATH = "examples/benchmark_models"
 
+def onnx_stuff(model):
+    from skl2onnx import convert_sklearn
+    from skl2onnx.common.data_types import FloatTensorType
+    initial_type = [('float_input', FloatTensorType([None, 100]))]
+    print("Converting sklearn")
+    onx = convert_sklearn(model, initial_types=initial_type)
+    print("Done")
+    # onx_string = onx.SerializeToString()
+    with open("examples/benchmark_models/rf_sklearn_large.onnx", "wb") as f:
+        print("Writing")
+        f.write(onx.SerializeToString())
+        # onx.SerializeToString()
+        print("Done")
+        # print(len(onx_string))
+
+
 
 def load_model(model_name: str, generate: Callable) -> Any:
     model_path = Path(f"{MODELS_PATH}/{model_name}.pkl")
@@ -104,6 +120,8 @@ def benchmark_model(  # noqa: PLR0913
         base_loads_func = pickle.loads
 
     model = train_func()
+    onnx_stuff(model)
+    exit(0)
 
     naive_dump_time = benchmark(base_dumps_func, model)
     naive_pickled = base_dumps_func(model)
@@ -217,18 +235,18 @@ if __name__ == "__main__":
         loads_lzma,
     )
     models_to_benchmark = [
-        ("sklearn rf", train_model_sklearn) + dumps_sklearn_args,
-        ("sklearn rf LZMA", train_model_sklearn) + dumps_sklearn_lzma_args,
+        # ("sklearn rf", train_model_sklearn) + dumps_sklearn_args,
+        # ("sklearn rf LZMA", train_model_sklearn) + dumps_sklearn_lzma_args,
         ("sklearn rf large", train_large_tree_sklearn) + dumps_sklearn_args,
-        ("sklearn rf large LZMA", train_large_tree_sklearn) + dumps_sklearn_lzma_args,
-        ("sklearn gb", train_gb_sklearn) + dumps_sklearn_args,
-        ("sklearn gb LZMA", train_gb_sklearn) + dumps_sklearn_lzma_args,
-        ("LGBM gbdt", train_gbdt_lgbm) + dumps_lgbm_args,
-        ("LGBM gbdt LZMA", train_gbdt_lgbm) + dumps_lgbm_lzma_args,
-        ("LGBM gbdt large", train_gbdt_large_lgbm) + dumps_lgbm_args,
-        ("LGBM gbdt large LZMA", train_gbdt_large_lgbm) + dumps_lgbm_lzma_args,
-        ("LGBM rf", train_rf_lgbm) + dumps_lgbm_args,
-        ("LGBM rf LZMA", train_rf_lgbm) + dumps_lgbm_lzma_args,
+        # ("sklearn rf large LZMA", train_large_tree_sklearn) + dumps_sklearn_lzma_args,
+        # ("sklearn gb", train_gb_sklearn) + dumps_sklearn_args,
+        # ("sklearn gb LZMA", train_gb_sklearn) + dumps_sklearn_lzma_args,
+        # ("LGBM gbdt", train_gbdt_lgbm) + dumps_lgbm_args,
+        # ("LGBM gbdt LZMA", train_gbdt_lgbm) + dumps_lgbm_lzma_args,
+        # ("LGBM gbdt large", train_gbdt_large_lgbm) + dumps_lgbm_args,
+        # ("LGBM gbdt large LZMA", train_gbdt_large_lgbm) + dumps_lgbm_lzma_args,
+        # ("LGBM rf", train_rf_lgbm) + dumps_lgbm_args,
+        # ("LGBM rf LZMA", train_rf_lgbm) + dumps_lgbm_lzma_args,
     ]
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
     print("Base results / Our results / Change")
