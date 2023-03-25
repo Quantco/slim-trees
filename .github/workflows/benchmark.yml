@@ -26,17 +26,18 @@ jobs:
           cache-name: benchmark-model-cache
         with:
           path: examples/benchmark_models
-          key: models-${{ hashFiles('benchmark.py') }}
+          key: models-${{ hashFiles('benchmark.py', '.github/workflows/benchmark.yml') }}
       - name: Run benchmark
         shell: bash -el {0}
         run: |
-          echo "_(benchmark **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_" >> benchmark.md
-          python benchmark.py >> benchmark.md
+          python benchmark.py
+          echo "_(benchmark **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_" >> result.md
+          cat benchmark.md >> result.md
       - name: Comment on PR
         if: github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@v2
         with:
-          filePath: benchmark.md
+          filePath: result.md
           comment_tag: benchmark
       - name: Add benchmark to Job Summary
         run: cat benchmark.md >> "$GITHUB_STEP_SUMMARY"

@@ -19,20 +19,23 @@ MODELS_PATH = "examples/benchmark_models"
 
 
 def load_model(model_name: str, generate: Callable) -> Any:
-    print(f"Loading model {model_name}...")
     model_path = Path(f"{MODELS_PATH}/{model_name}.pkl")
 
-    # if model_path.exists():
-    #     with open(model_path, "rb") as f:
-    #         return pickle.load(f)
+    if model_path.exists():
+        print(f"Loading model `{model_name}.pkl` from disk...")
+        with open(model_path, "rb") as f:
+            return pickle.load(f)
 
+    print(f"Training model `{model_name}`...")
     regressor = generate()
     regressor.fit(
         *generate_dataset(n_samples=10000),
     )
-    model_path.parent.mkdir(parents=True, exist_ok=True)
     size = get_pickled_size(regressor, "no", pickle.dump)
-    print(f"Model {model_name} has size {size / 2**20} MB")
+    print(f"Trained model {model_name}. Size {size / 2**20:.2f} MB")
+
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+
     with open(model_path, "wb") as f:
         pickle.dump(regressor, f)
     return regressor
@@ -70,15 +73,6 @@ def train_sklearn_gb_10m() -> GradientBoostingRegressor:
             n_estimators=2000, max_leaf_nodes=50, random_state=42, verbose=True
         ),
     )
-
-
-# def train_sklearn_gb_200m() -> GradientBoostingRegressor:
-#     return load_model(
-#         "sklearn_gb_200m",
-#         lambda: GradientBoostingRegressor(
-#             # n_estimators=2000, max_leaf_nodes=20000000, random_state=42
-#         ),
-#     )
 
 
 def train_lgbm_gbdt_2m() -> lgb.Booster:
@@ -145,13 +139,14 @@ def benchmark_model(  # noqa: PLR0913
         base_loads_func = pickle.loads
 
     model = train_func()
-    return {}
 
+    print(f"Benchmarking naive implementation of `{name}`...")
     naive_dump_time = benchmark(base_dumps_func, model)
     naive_pickled = base_dumps_func(model)
     naive_pickled_size = len(naive_pickled)
     naive_load_time = benchmark(base_loads_func, naive_pickled)
 
+    print(f"Benchmarking our implementation of `{name}`...")
     our_dump_time = benchmark(dumps_func, model)
     our_pickled = dumps_func(model)
     our_pickled_size = len(our_pickled)
@@ -263,7 +258,6 @@ if __name__ == "__main__":
         ("sklearn rf 200M", train_sklearn_rf_200m),
         ("sklearn rf 1G", train_sklearn_rf_1g),
         ("sklearn gb 10M", train_sklearn_gb_10m),
-        # ("sklearn gb 200M", train_sklearn_gb_200m),
         ("lgbm gbdt 2M", train_lgbm_gbdt_2m),
         ("lgbm gbdt 5M", train_lgbm_gbdt_5m),
         ("lgbm gbdt 20M", train_lgbm_gbdt_20m),
@@ -287,12 +281,11 @@ if __name__ == "__main__":
         else:
             raise ValueError(f"Unknown model name: {model_name}")
 
-    # models_to_benchmark = itertools.chain.from_iterable(
-    #     [[get_dumps_args(*model)] for model in models]
-    # )
     models_to_benchmark = itertools.chain.from_iterable(
         [[get_dumps_args(*model), get_dumps_args_lzma(*model)] for model in models]
     )
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
-    print("Base results / Our results / Change")
-    # print(format_benchmarks_results_table(benchmark_results))
+    results_str = format_benchmarks_results_table(benchmark_results)
+    with open("benchmark.md", "w") as f:
+        f.write("Base results / Our results / Change\n")
+        f.write(results_str)
