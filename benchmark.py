@@ -1,4 +1,5 @@
 import io
+import itertools
 import lzma
 import pickle
 import textwrap
@@ -11,69 +12,109 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 from examples.utils import generate_dataset
 from slim_trees.lgbm_booster import dump_lgbm
+from slim_trees.pickling import get_pickled_size
 from slim_trees.sklearn_tree import dump_sklearn
 
 MODELS_PATH = "examples/benchmark_models"
 
 
 def load_model(model_name: str, generate: Callable) -> Any:
+    print(f"Loading model {model_name}...")
     model_path = Path(f"{MODELS_PATH}/{model_name}.pkl")
 
-    if model_path.exists():
-        with open(model_path, "rb") as f:
-            return pickle.load(f)
+    # if model_path.exists():
+    #     with open(model_path, "rb") as f:
+    #         return pickle.load(f)
 
     regressor = generate()
-    regressor.fit(*generate_dataset(n_samples=10000))
+    regressor.fit(
+        *generate_dataset(n_samples=10000),
+    )
     model_path.parent.mkdir(parents=True, exist_ok=True)
+    size = get_pickled_size(regressor, "no", pickle.dump)
+    print(f"Model {model_name} has size {size / 2**20} MB")
     with open(model_path, "wb") as f:
         pickle.dump(regressor, f)
     return regressor
 
 
-def train_gb_sklearn() -> GradientBoostingRegressor:
+def train_sklearn_rf_20m() -> RandomForestRegressor:
     return load_model(
-        "gb_sklearn",
-        lambda: GradientBoostingRegressor(n_estimators=2000, random_state=42),
+        "sklearn_rf_20m",
+        lambda: RandomForestRegressor(
+            n_estimators=100, max_leaf_nodes=1700, random_state=42, n_jobs=-1
+        ),
     )
 
 
-def train_large_tree_sklearn() -> RandomForestRegressor:
+def train_sklearn_rf_200m() -> RandomForestRegressor:
     return load_model(
-        "rf_sklearn_large",
+        "sklearn_rf_200m",
+        lambda: RandomForestRegressor(n_estimators=275, random_state=42, n_jobs=-1),
+    )
+
+
+def train_sklearn_rf_1g() -> RandomForestRegressor:
+    return load_model(
+        "sklearn_rf_1g",
         lambda: RandomForestRegressor(
             n_estimators=1500, max_leaf_nodes=10000, random_state=42, n_jobs=-1
         ),
     )
 
 
-def train_model_sklearn() -> RandomForestRegressor:
+def train_sklearn_gb_10m() -> GradientBoostingRegressor:
     return load_model(
-        "rf_sklearn",
-        lambda: RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1),
+        "sklearn_gb_10m",
+        lambda: GradientBoostingRegressor(
+            n_estimators=2000, max_leaf_nodes=50, random_state=42, verbose=True
+        ),
     )
 
 
-def train_gbdt_lgbm() -> lgb.LGBMRegressor:
+# def train_sklearn_gb_200m() -> GradientBoostingRegressor:
+#     return load_model(
+#         "sklearn_gb_200m",
+#         lambda: GradientBoostingRegressor(
+#             # n_estimators=2000, max_leaf_nodes=20000000, random_state=42
+#         ),
+#     )
+
+
+def train_lgbm_gbdt_2m() -> lgb.Booster:
     return load_model(
-        "gbdt_lgbm", lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42)
+        "lgbm_gbdt_2m", lambda: lgb.LGBMRegressor(n_estimators=1000, random_state=42)
     )
 
 
-def train_gbdt_large_lgbm() -> lgb.LGBMRegressor:
+def train_lgbm_gbdt_5m() -> lgb.Booster:
     return load_model(
-        "gbdt_large_lgbm",
-        lambda: lgb.LGBMRegressor(n_estimators=20000, random_state=42),
+        "lgbm_gbdt_5m",
+        lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42),
     )
 
 
-def train_rf_lgbm() -> lgb.LGBMRegressor:
+def train_lgbm_gbdt_20m() -> lgb.Booster:
     return load_model(
-        "rg_lgbm",
+        "lgbm_gbdt_20m",
+        lambda: lgb.LGBMRegressor(n_estimators=8000, random_state=42),
+    )
+
+
+def train_lgbm_gbdt_100m() -> lgb.Booster:
+    return load_model(
+        "lgbm_gbdt_100m",
+        lambda: lgb.LGBMRegressor(n_estimators=35000, random_state=42),
+    )
+
+
+def train_lgbm_rf_10m() -> lgb.Booster:
+    return load_model(
+        "lgbm_rf_10m",
         lambda: lgb.LGBMRegressor(
             boosting_type="rf",
-            n_estimators=100,
-            num_leaves=1000,
+            n_estimators=700,
+            num_leaves=8000,
             random_state=42,
             bagging_freq=5,
             bagging_fraction=0.5,
@@ -104,6 +145,7 @@ def benchmark_model(  # noqa: PLR0913
         base_loads_func = pickle.loads
 
     model = train_func()
+    return {}
 
     naive_dump_time = benchmark(base_dumps_func, model)
     naive_pickled = base_dumps_func(model)
@@ -216,20 +258,41 @@ if __name__ == "__main__":
         dumps_lzma,
         loads_lzma,
     )
-    models_to_benchmark = [
-        ("sklearn rf", train_model_sklearn) + dumps_sklearn_args,
-        ("sklearn rf LZMA", train_model_sklearn) + dumps_sklearn_lzma_args,
-        ("sklearn rf large", train_large_tree_sklearn) + dumps_sklearn_args,
-        ("sklearn rf large LZMA", train_large_tree_sklearn) + dumps_sklearn_lzma_args,
-        ("sklearn gb", train_gb_sklearn) + dumps_sklearn_args,
-        ("sklearn gb LZMA", train_gb_sklearn) + dumps_sklearn_lzma_args,
-        ("LGBM gbdt", train_gbdt_lgbm) + dumps_lgbm_args,
-        ("LGBM gbdt LZMA", train_gbdt_lgbm) + dumps_lgbm_lzma_args,
-        ("LGBM gbdt large", train_gbdt_large_lgbm) + dumps_lgbm_args,
-        ("LGBM gbdt large LZMA", train_gbdt_large_lgbm) + dumps_lgbm_lzma_args,
-        ("LGBM rf", train_rf_lgbm) + dumps_lgbm_args,
-        ("LGBM rf LZMA", train_rf_lgbm) + dumps_lgbm_lzma_args,
+    models = [
+        ("sklearn rf 20M", train_sklearn_rf_20m),
+        ("sklearn rf 200M", train_sklearn_rf_200m),
+        ("sklearn rf 1G", train_sklearn_rf_1g),
+        ("sklearn gb 10M", train_sklearn_gb_10m),
+        # ("sklearn gb 200M", train_sklearn_gb_200m),
+        ("lgbm gbdt 2M", train_lgbm_gbdt_2m),
+        ("lgbm gbdt 5M", train_lgbm_gbdt_5m),
+        ("lgbm gbdt 20M", train_lgbm_gbdt_20m),
+        ("lgbm gbdt 100M", train_lgbm_gbdt_100m),
+        ("lgbm rf 10M", train_lgbm_rf_10m),
     ]
+
+    def get_dumps_args(model_name, train_func):
+        if "sklearn" in model_name:
+            return (model_name, train_func) + dumps_sklearn_args
+        elif "lgbm" in model_name:
+            return (model_name, train_func) + dumps_lgbm_args
+        else:
+            raise ValueError(f"Unknown model name: {model_name}")
+
+    def get_dumps_args_lzma(model_name, train_func):
+        if "sklearn" in model_name:
+            return (model_name + " lzma", train_func) + dumps_sklearn_lzma_args
+        elif "lgbm" in model_name:
+            return (model_name + " lzma", train_func) + dumps_lgbm_lzma_args
+        else:
+            raise ValueError(f"Unknown model name: {model_name}")
+
+    # models_to_benchmark = itertools.chain.from_iterable(
+    #     [[get_dumps_args(*model)] for model in models]
+    # )
+    models_to_benchmark = itertools.chain.from_iterable(
+        [[get_dumps_args(*model), get_dumps_args_lzma(*model)] for model in models]
+    )
     benchmark_results = [benchmark_model(*args) for args in models_to_benchmark]
     print("Base results / Our results / Change")
-    print(format_benchmarks_results_table(benchmark_results))
+    # print(format_benchmarks_results_table(benchmark_results))
