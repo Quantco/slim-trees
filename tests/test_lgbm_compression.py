@@ -20,7 +20,7 @@ def lgbm_regressor(rng, request):
     return LGBMRegressor(random_state=rng, linear_trees=request.param)
 
 
-def test_compresed_predictions(diabetes_toy_df, lgbm_regressor, tmp_path):
+def test_compressed_predictions(diabetes_toy_df, lgbm_regressor, tmp_path):
     X, y = diabetes_toy_df
     lgbm_regressor.fit(X, y)
 
