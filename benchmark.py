@@ -70,7 +70,7 @@ def train_sklearn_gb_10m() -> GradientBoostingRegressor:
     return load_model(
         "sklearn_gb_10m",
         lambda: GradientBoostingRegressor(
-            n_estimators=2000, max_leaf_nodes=50, random_state=42, verbose=True
+            n_estimators=20000, random_state=42, verbose=True
         ),
     )
 
@@ -254,15 +254,15 @@ if __name__ == "__main__":
         loads_lzma,
     )
     models = [
-        ("sklearn rf 20M", train_sklearn_rf_20m),
-        ("sklearn rf 200M", train_sklearn_rf_200m),
-        ("sklearn rf 1G", train_sklearn_rf_1g),
+        # ("sklearn rf 20M", train_sklearn_rf_20m),
+        # ("sklearn rf 200M", train_sklearn_rf_200m),
+        # ("sklearn rf 1G", train_sklearn_rf_1g),
         ("sklearn gb 10M", train_sklearn_gb_10m),
-        ("lgbm gbdt 2M", train_lgbm_gbdt_2m),
-        ("lgbm gbdt 5M", train_lgbm_gbdt_5m),
-        ("lgbm gbdt 20M", train_lgbm_gbdt_20m),
-        ("lgbm gbdt 100M", train_lgbm_gbdt_100m),
-        ("lgbm rf 10M", train_lgbm_rf_10m),
+        # ("lgbm gbdt 2M", train_lgbm_gbdt_2m),
+        # ("lgbm gbdt 5M", train_lgbm_gbdt_5m),
+        # ("lgbm gbdt 20M", train_lgbm_gbdt_20m),
+        # ("lgbm gbdt 100M", train_lgbm_gbdt_100m),
+        # ("lgbm rf 10M", train_lgbm_rf_10m),
     ]
 
     def get_dumps_args(model_name, train_func):
