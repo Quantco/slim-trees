@@ -16,7 +16,7 @@ from slim_trees.pickling import load_compressed
 
 
 def train_model() -> lgb.LGBMRegressor:
-    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=42, linear_tree=True)
+    regressor = lgb.LGBMRegressor(n_estimators=100, random_state=42)
     X, y = generate_dataset(n_samples=10000)
     regressor.fit(X, y)
     return regressor
