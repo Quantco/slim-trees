@@ -75,34 +75,34 @@ def train_sklearn_gb_2m() -> GradientBoostingRegressor:
     )
 
 
-def train_lgbm_gbdt_2m() -> lgb.Booster:
+def train_lgbm_gbdt_2m() -> lgb.LGBMRegressor:
     return load_model(
         "lgbm_gbdt_2m", lambda: lgb.LGBMRegressor(n_estimators=1000, random_state=42)
     )
 
 
-def train_lgbm_gbdt_5m() -> lgb.Booster:
+def train_lgbm_gbdt_5m() -> lgb.LGBMRegressor:
     return load_model(
         "lgbm_gbdt_5m",
         lambda: lgb.LGBMRegressor(n_estimators=2000, random_state=42),
     )
 
 
-def train_lgbm_gbdt_20m() -> lgb.Booster:
+def train_lgbm_gbdt_20m() -> lgb.LGBMRegressor:
     return load_model(
         "lgbm_gbdt_20m",
         lambda: lgb.LGBMRegressor(n_estimators=8000, random_state=42),
     )
 
 
-def train_lgbm_gbdt_100m() -> lgb.Booster:
+def train_lgbm_gbdt_100m() -> lgb.LGBMRegressor:
     return load_model(
         "lgbm_gbdt_100m",
         lambda: lgb.LGBMRegressor(n_estimators=35000, random_state=42),
     )
 
 
-def train_lgbm_rf_10m() -> lgb.Booster:
+def train_lgbm_rf_10m() -> lgb.LGBMRegressor:
     return load_model(
         "lgbm_rf_10m",
         lambda: lgb.LGBMRegressor(
