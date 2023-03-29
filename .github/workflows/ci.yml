@@ -9,11 +9,6 @@ defaults:
   run:
     shell: bash -el {0}
 
-env:
-  CONDA_CHANNEL_UPLOAD_USER: ${{ secrets.CONDA_CHANNEL_UPLOAD_USER }}
-  CONDA_CHANNEL_UPLOAD_PASSWORD: ${{ secrets.CONDA_CHANNEL_UPLOAD_PASSWORD }}
-  CONDA_API_KEY: ${{ secrets.QUETZ_API_KEY }}
-
 jobs:
   linux-unittests:
     name: "Unit tests - Python ${{ matrix.PYTHON_VERSION }}"
