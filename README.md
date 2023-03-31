@@ -9,6 +9,40 @@ A python package for efficient pickling.
 
 ## Installation
 
+```bash
+pip install slim-trees
+# or
+mamba install slim-trees -c conda-forge
+```
+
+## Usage
+
+Using `slim-trees` does not affect your training pipeline.
+Simply replace calls to `pickle.dumps` with `slim_trees.dump_sklearn_compressed`:
+
+```python
+# example, you can also use other Tree-based models
+from sklearn.tree import DecisionTreeClassifier
+from slim_trees import dump_sklearn_compressed
+
+# load training data
+X, y = ...
+model = DecisionTreeClassifier()
+model.fit(X, y)
+
+dump_sklearn_compressed(model, "model.pkl")
+```
+
+Later, you can load the model using `pickle.load` as usual.
+
+```python
+import pickle
+
+model = pickle.load("model.pkl")
+```
+
+## Development Installation
+
 You can install the package in development mode using:
 
 ```bash
