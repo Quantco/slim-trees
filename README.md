@@ -5,7 +5,8 @@
 [![pypi-version](https://img.shields.io/pypi/v/slim-trees.svg?logo=pypi&logoColor=white)](https://pypi.org/project/slim-trees)
 [![python-version](https://img.shields.io/pypi/pyversions/slim-trees?logoColor=white&logo=python)](https://pypi.org/project/slim-trees)
 
-A python package for efficient pickling.
+`slim-trees` is a Python package for saving and loading compressed `sklearn` Tree-based models.
+The compression is performed by modifying how the model is pickled by Python's `pickle` module.
 
 ## Installation
 
@@ -18,16 +19,18 @@ mamba install slim-trees -c conda-forge
 ## Usage
 
 Using `slim-trees` does not affect your training pipeline.
-Simply replace calls to `pickle.dumps` with `slim_trees.dump_sklearn_compressed`:
+Simply call `dump_sklearn_compressed` instead of `pickle.dump` to save your model.
+
+Example for a `RandomForestClassifier`:
 
 ```python
 # example, you can also use other Tree-based models
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from slim_trees import dump_sklearn_compressed
 
 # load training data
 X, y = ...
-model = DecisionTreeClassifier()
+model = RandomForestClassifier()
 model.fit(X, y)
 
 dump_sklearn_compressed(model, "model.pkl")
