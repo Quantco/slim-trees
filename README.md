@@ -47,11 +47,14 @@ model = load_compressed("model.pkl")
 ```
 
 ---
+
 ### drop-in replacement for pickle
+
 ```python
 from slim_trees import sklearn_tree
+
 with open("model.pkl", "wb") as f:
-    sklearn_tree.dump(model, f) # instead of pickle.dump(...)
+    sklearn_tree.dump(model, f)  # instead of pickle.dump(...)
 ```
 
 ## Development Installation
@@ -70,3 +73,12 @@ conda activate slim_trees
 pre-commit install
 pip install --no-build-isolation -e .
 ```
+
+## Benchmark
+
+As a general overview on what you can expect in terms of savings:
+This is a 1.2G large sklearn `RandomForestRegressor`.
+
+![benchmark](.github/assets/benchmark.png)
+
+The new file is 9x smaller than the original pickle file.
