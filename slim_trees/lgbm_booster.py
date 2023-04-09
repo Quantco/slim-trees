@@ -22,7 +22,7 @@ except ImportError:
     sys.exit(os.EX_CONFIG)
 
 
-def dump_lgbm(model: Any, file: BinaryIO):
+def dump(model: Any, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
     p.dispatch_table[Booster] = _booster_pickle
