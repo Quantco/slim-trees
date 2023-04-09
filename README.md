@@ -34,14 +34,24 @@ model = RandomForestClassifier()
 model.fit(X, y)
 
 dump_sklearn_compressed(model, "model.pkl")
+# or alternatively with compression
+dump_sklearn_compressed(model, "model.pkl.lzma")
 ```
 
 Later, you can load the model using `pickle.load` as usual.
 
 ```python
-import pickle
+from slim_trees import load_compressed
 
-model = pickle.load("model.pkl")
+model = load_compressed("model.pkl")
+```
+
+---
+### drop-in replacement for pickle
+```python
+from slim_trees import sklearn_tree
+with open("model.pkl", "wb") as f:
+    sklearn_tree.dump(model, f) # instead of pickle.dump(...)
 ```
 
 ## Development Installation
