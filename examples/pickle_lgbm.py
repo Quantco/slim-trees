@@ -11,7 +11,7 @@ from utils import (
 )
 
 from slim_trees import dump_lgbm_compressed
-from slim_trees.lgbm_booster import dump_lgbm
+from slim_trees.lgbm_booster import dump
 from slim_trees.pickling import load_compressed
 
 
@@ -47,4 +47,4 @@ if __name__ == "__main__":
     evaluate_prediction_difference(
         model, model_compressed, generate_dataset(n_samples=10000)[0]
     )
-    evaluate_compression_performance(model, dump_lgbm)
+    evaluate_compression_performance(model, dump)

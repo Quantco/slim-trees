@@ -10,7 +10,7 @@ from utils import (
 
 from slim_trees import dump_sklearn_compressed
 from slim_trees.pickling import load_compressed
-from slim_trees.sklearn_tree import dump_sklearn
+from slim_trees.sklearn_tree import dump
 
 
 def train_model() -> RandomForestRegressor:
@@ -31,4 +31,4 @@ if __name__ == "__main__":
     evaluate_prediction_difference(
         model, model_compressed, generate_dataset(n_samples=10000)[0]
     )
-    evaluate_compression_performance(model, dump_sklearn)
+    evaluate_compression_performance(model, dump)

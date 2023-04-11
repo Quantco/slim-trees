@@ -12,8 +12,8 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 from examples.utils import generate_dataset
 from slim_trees.lgbm_booster import dump as dump_lgbm
-from slim_trees.sklearn_tree import dump as dump_sklearn
 from slim_trees.pickling import get_pickled_size
+from slim_trees.sklearn_tree import dump as dump_sklearn
 
 MODELS_PATH = "examples/benchmark_models"
 
