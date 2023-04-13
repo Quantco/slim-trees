@@ -11,20 +11,27 @@ pickling module.
 """
 
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import pkg_resources
 
-from slim_trees.pickling import dump_compressed
+from slim_trees.pickling import dump_compressed, load_compressed
 
 try:
     __version__ = pkg_resources.get_distribution(__name__).version
 except Exception:
     __version__ = "unknown"
 
+__all__ = [
+    "dump_compressed",
+    "load_compressed",
+    "dump_sklearn_compressed",
+    "dump_lgbm_compressed",
+]
+
 
 def dump_sklearn_compressed(
-    model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
+    model: Any, path: Union[str, Path], compression: Optional[Union[str, dict]] = None
 ):
     """
     Pickles a model and saves a compressed version to the disk.
@@ -35,16 +42,27 @@ def dump_sklearn_compressed(
     :param compression: the compression method used. Either a string or a dict with key 'method' set
                         to the compression method and other key-value pairs are forwarded to `open`
                         of the compression library.
-                        Inspired by the pandas.to_csv interface.
+                        Options: ["no", "lzma", "gzip", "bz2"]
     """
-    from slim_trees.sklearn_tree import dump_sklearn
+    from slim_trees.sklearn_tree import dump
 
-    dump_compressed(model, path, compression, dump_sklearn)
+    dump_compressed(model, path, compression, dump)
 
 
 def dump_lgbm_compressed(
-    model: Any, path: Union[str, Path], compression: Union[str, dict] = "lzma"
+    model: Any, path: Union[str, Path], compression: Optional[Union[str, dict]] = None
 ):
-    from slim_trees.lgbm_booster import dump_lgbm
+    """
+    Pickles a model and saves a compressed version to the disk.
 
-    dump_compressed(model, path, compression, dump_lgbm)
+    Saves the parameters of the model as int16 and float32 instead of int64 and float64.
+    :param model: the model to save
+    :param path: where to save the model
+    :param compression: the compression method used. Either a string or a dict with key 'method' set
+                        to the compression method and other key-value pairs are forwarded to `open`
+                        of the compression library.
+                        Options: ["no", "lzma", "gzip", "bz2"]
+    """
+    from slim_trees.lgbm_booster import dump
+
+    dump_compressed(model, path, compression, dump)

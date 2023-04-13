@@ -22,7 +22,7 @@ from typing import Any, BinaryIO
 import numpy as np
 
 
-def dump_sklearn(model: Any, file: BinaryIO):
+def dump(model: Any, file: BinaryIO):
     p = pickle.Pickler(file)
     p.dispatch_table = copyreg.dispatch_table.copy()
     p.dispatch_table[Tree] = _tree_pickle
