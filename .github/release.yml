@@ -10,6 +10,12 @@ changelog:
     - title: Bug fixes
       labels:
         - bug
+    - title: Documentation
+      labels:
+        - documentation
+    - title: Dependencies
+      labels:
+        - dependencies
     - title: Other changes
       labels:
-        - "*"
+        - '*'
