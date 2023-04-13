@@ -19,7 +19,7 @@ mamba install slim-trees -c conda-forge
 ## Usage
 
 Using `slim-trees` does not affect your training pipeline.
-Simply call `dump_sklearn_compressed` to save your model.
+Simply call `dump_sklearn_compressed` or `dump_lgbm_compressed` to save your model.
 
 > ⚠️ `slim-trees` does not save all the data that would be saved by `sklearn`:
 > only the parameters that are relevant for inference are saved. If you want to save the full model including
