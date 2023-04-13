@@ -15,12 +15,19 @@ from typing import Any, Optional, Union
 
 import pkg_resources
 
-from slim_trees.pickling import dump_compressed
+from slim_trees.pickling import dump_compressed, load_compressed
 
 try:
     __version__ = pkg_resources.get_distribution(__name__).version
 except Exception:
     __version__ = "unknown"
+
+__all__ = [
+    "dump_compressed",
+    "load_compressed",
+    "dump_sklearn_compressed",
+    "dump_lgbm_compressed",
+]
 
 
 def dump_sklearn_compressed(

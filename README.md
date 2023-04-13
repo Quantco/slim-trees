@@ -5,7 +5,7 @@
 [![pypi-version](https://img.shields.io/pypi/v/slim-trees.svg?logo=pypi&logoColor=white)](https://pypi.org/project/slim-trees)
 [![python-version](https://img.shields.io/pypi/pyversions/slim-trees?logoColor=white&logo=python)](https://pypi.org/project/slim-trees)
 
-`slim-trees` is a Python package for saving and loading compressed `sklearn` Tree-based models.
+`slim-trees` is a Python package for saving and loading compressed `sklearn` Tree-based and `lightgbm` models.
 The compression is performed by modifying how the model is pickled by Python's `pickle` module.
 
 ## Installation
@@ -38,6 +38,22 @@ dump_sklearn_compressed(model, "model.pkl")
 dump_sklearn_compressed(model, "model.pkl.lzma")
 ```
 
+Example for a `LGBMRegressor`:
+
+```python
+from lightgbm import LGBMRegressor
+from slim_trees import dump_lgbm_compressed
+
+# load training data
+X, y = ...
+model = LGBMRegressor()
+model.fit(X, y)
+
+dump_lgbm_compressed(model, "model.pkl")
+# or alternatively with compression
+dump_lgbm_compressed(model, "model.pkl.lzma")
+```
+
 Later, you can load the model using `pickle.load` as usual.
 
 ```python
@@ -51,10 +67,15 @@ model = load_compressed("model.pkl")
 ### drop-in replacement for pickle
 
 ```python
-from slim_trees import sklearn_tree
+from slim_trees import sklearn_tree, lgbm_booster
 
+# for sklearn models
 with open("model.pkl", "wb") as f:
     sklearn_tree.dump(model, f)  # instead of pickle.dump(...)
+
+# for lightgbm models
+with open("model.pkl", "wb") as f:
+    lgbm_booster.dump(model, f)  # instead of pickle.dump(...)
 ```
 
 ## Development Installation
