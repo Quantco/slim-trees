@@ -19,7 +19,12 @@ mamba install slim-trees -c conda-forge
 ## Usage
 
 Using `slim-trees` does not affect your training pipeline.
-Simply call `dump_sklearn_compressed` instead of `pickle.dump` to save your model.
+Simply call `dump_sklearn_compressed` to save your model.
+
+> ⚠️ `slim-trees` does not save all the data that would be saved by `sklearn`:
+> only the parameters that are relevant for inference are saved. If you want to save the full model including
+> `impurity` etc. for analytic purposes, we suggest saving both the original using `pickle.dump` for analytics
+> and the slimmed down version using `slim-trees` for production.
 
 Example for a `RandomForestClassifier`:
 
@@ -54,17 +59,24 @@ dump_lgbm_compressed(model, "model.pkl")
 dump_lgbm_compressed(model, "model.pkl.lzma")
 ```
 
-Later, you can load the model using `pickle.load` as usual.
+Later, you can load the model using `load_compressed` or `pickle.load`.
 
 ```python
+import pickle
 from slim_trees import load_compressed
 
 model = load_compressed("model.pkl")
+
+# or alternatively with pickle.load
+with open("model.pkl", "rb") as f:
+    model = pickle.load(f)
 ```
 
 ---
 
 ### drop-in replacement for pickle
+
+You can also use the `slim_trees.sklearn_tree.dump` or `slim_trees.lgbm_booster.dump` functions as drop-in replacements for `pickle.dump`.
 
 ```python
 from slim_trees import sklearn_tree, lgbm_booster
