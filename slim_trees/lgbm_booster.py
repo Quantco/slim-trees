@@ -3,17 +3,27 @@ import os
 import pickle
 import re
 import sys
-from typing import Any, BinaryIO, List, Tuple
+from typing import Any, BinaryIO, List, Optional, Tuple
 
 import numpy as np
+import pandas as pd
 
 from slim_trees import __version__ as slim_trees_version
 from slim_trees.compression_utils import (
-    compress_half_int_float_array,
-    decompress_half_int_float_array,
     safe_cast,
 )
-from slim_trees.utils import check_version
+from slim_trees.utils import check_version, df_to_pq_bytes, pq_bytes_to_df
+
+FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
+BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
+TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
+
+SPLIT_FEATURE_DTYPE = np.int16
+THRESHOLD_DTYPE = np.float64
+DECISION_TYPE_DTYPE = np.int8
+LEFT_CHILD_DTYPE = np.int16
+RIGHT_CHILD_DTYPE = LEFT_CHILD_DTYPE
+LEAF_VALUE_DTYPE = np.float64
 
 try:
     from lightgbm.basic import Booster
@@ -68,124 +78,233 @@ def _decompress_booster_state(compressed_state: dict):
     return state
 
 
-def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
+def _extract_feature(feature_line: str) -> Tuple[str, List[str]]:
+    feat_name, values_str = feature_line.split("=")
+    return feat_name, values_str.split(" ")
+
+
+def _validate_feature_lengths(feats_map: dict):
+    # features on tree-level
+    assert len(feats_map["num_leaves"]) == 1
+    assert len(feats_map["num_cat"]) == 1
+    assert len(feats_map["is_linear"]) == 1
+    assert len(feats_map["shrinkage"]) == 1
+
+    # features on node-level
+    num_leaves = int(feats_map["num_leaves"][0])
+    assert len(feats_map["split_feature"]) == num_leaves - 1
+    assert len(feats_map["threshold"]) == num_leaves - 1
+    assert len(feats_map["decision_type"]) == num_leaves - 1
+    assert len(feats_map["left_child"]) == num_leaves - 1
+    assert len(feats_map["right_child"]) == num_leaves - 1
+
+    # features on leaf-level
+    num_leaves = int(feats_map["num_leaves"][0])
+    assert len(feats_map["leaf_value"]) == num_leaves
+
+
+def parse(str_list, dtype):
+    if np.can_cast(dtype, np.int64):
+        int64_array = np.array(str_list, dtype=np.int64)
+        return safe_cast(int64_array, dtype)
+    assert np.can_cast(dtype, np.float64)
+    return np.array(str_list, dtype=dtype)
+
+
+def _compress_booster_handle(
+    model_string: str,
+) -> Tuple[str, bytes, bytes, bytes, Optional[bytes], str]:
     if not model_string.startswith("tree\nversion=v3"):
         raise ValueError("Only v3 is supported for the booster string format.")
-    FRONT_STRING_REGEX = r"(?:\w+(?:=.*)?\n)*\n(?=Tree)"
-    BACK_STRING_REGEX = r"end of trees(?:\n)+(?:.|\n)*"
-    TREE_GROUP_REGEX = r"(Tree=\d+\n+)((?:.+\n)*)\n\n"
-
-    def _extract_feature(feature_line):
-        feat_name, values_str = feature_line.split("=")
-        return feat_name, values_str.split(" ")
 
     front_str_match = re.search(FRONT_STRING_REGEX, model_string)
     if front_str_match is None:
         raise ValueError("Could not find front string.")
-    front_str = front_str_match.group()
-    # delete tree_sizes line since this messes up the tree parsing by LightGBM if not set correctly
     # todo calculate correct tree_sizes
-    front_str = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str)
+    front_str = re.sub(r"tree_sizes=(?:\d+ )*\d+\n", "", front_str_match.group())
 
     back_str_match = re.search(BACK_STRING_REGEX, model_string)
     if back_str_match is None:
         raise ValueError("Could not find back string.")
     back_str = back_str_match.group()
+
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
+    node_features: List[dict] = []
+    leaf_values: List[dict] = []
     trees: List[dict] = []
-    for i, tree_match in enumerate(tree_matches):
+    linear_values: List[dict] = []
+    for _i, tree_match in enumerate(tree_matches):
         tree_name, features_list = tree_match
         _, tree_idx = tree_name.replace("\n", "").split("=")
-        assert int(tree_idx) == i
 
         # extract features -- filter out empty ones
         features = [f for f in features_list.split("\n") if "=" in f]
         feats_map = dict(_extract_feature(fl) for fl in features)
 
-        def parse(str_list, dtype):
-            if np.can_cast(dtype, np.int64):
-                int64_array = np.array(str_list, dtype=np.int64)
-                return safe_cast(int64_array, dtype)
-            assert np.can_cast(dtype, np.float64)
-            return np.array(str_list, dtype=dtype)
+        # validate that we have the correct lengths
+        _validate_feature_lengths(feats_map)
 
-        split_feature_dtype = np.int16
-        threshold_dtype = np.float64
-        decision_type_dtype = np.int8
-        left_child_dtype = np.int16
-        right_child_dtype = left_child_dtype
-        leaf_value_dtype = np.float64
-        assert len(feats_map["num_leaves"]) == 1
-        assert len(feats_map["num_cat"]) == 1
-        assert len(feats_map["is_linear"]) == 1
-        assert len(feats_map["shrinkage"]) == 1
-
+        # length = 1
         trees.append(
             {
+                "tree_idx": int(tree_idx),
                 "num_leaves": int(feats_map["num_leaves"][0]),
                 "num_cat": int(feats_map["num_cat"][0]),
-                "split_feature": parse(feats_map["split_feature"], split_feature_dtype),
-                "threshold": compress_half_int_float_array(
-                    parse(feats_map["threshold"], threshold_dtype)
-                ),
-                "decision_type": parse(feats_map["decision_type"], decision_type_dtype),
-                "left_child": parse(feats_map["left_child"], left_child_dtype),
-                "right_child": parse(feats_map["right_child"], right_child_dtype),
-                "leaf_value": parse(feats_map["leaf_value"], leaf_value_dtype),
                 "is_linear": int(feats_map["is_linear"][0]),
                 "shrinkage": float(feats_map["shrinkage"][0]),
             }
         )
-    return front_str, trees, back_str
+
+        # length = num_inner_nodes = num_leaves - 1
+        node_features.append(
+            {
+                "tree_idx": int(tree_idx),
+                # all the upcoming attributes have length num_leaves - 1
+                "split_feature": parse(feats_map["split_feature"], SPLIT_FEATURE_DTYPE),
+                "threshold": parse(feats_map["threshold"], THRESHOLD_DTYPE),
+                "decision_type": parse(feats_map["decision_type"], DECISION_TYPE_DTYPE),
+                "left_child": parse(feats_map["left_child"], LEFT_CHILD_DTYPE),
+                "right_child": parse(feats_map["right_child"], RIGHT_CHILD_DTYPE),
+            }
+        )
+
+        # length = num_leaves
+        leaf_values.append(
+            {
+                "tree_idx": int(tree_idx),
+                "leaf_value": parse(feats_map["leaf_value"], LEAF_VALUE_DTYPE),
+            }
+        )
+
+        # length = sum_l=0^{num_leaves} {num_features(l)}
+        # attributes: leaf_features, leaf_coeff, leaf_const, num_features\
+        # TODO: some of these attributes, e.g. leaf_const, might not be needed
+        if "leaf_features" in feats_map:
+            leaf_values[-1]["leaf_const"] = parse(
+                feats_map["leaf_const"], LEAF_VALUE_DTYPE
+            )
+            leaf_values[-1]["num_features"] = parse(feats_map["num_features"], np.int32)
+
+            linear_values.append(
+                {
+                    "tree_idx": int(tree_idx),
+                    "leaf_features": parse(
+                        [s if s else -1 for s in feats_map["leaf_features"]],
+                        np.int16,
+                    ),
+                    "leaf_coeff": parse(
+                        [s if s else None for s in feats_map["leaf_coeff"]], np.float64
+                    ),
+                }
+            )
+
+    tree_value_bytes = df_to_pq_bytes(pd.DataFrame(trees))
+
+    nodes_df = pd.DataFrame(node_features)
+    node_values_bytes = df_to_pq_bytes(
+        nodes_df.explode(
+            [
+                "split_feature",
+                "threshold",
+                "decision_type",
+                "left_child",
+                "right_child",
+            ]
+        )
+    )
+
+    leaf_values_bytes = df_to_pq_bytes(
+        pd.DataFrame(leaf_values).explode(
+            ["leaf_value"] + (["leaf_const", "num_features"] if linear_values else [])
+        )
+    )
+
+    linear_values_bytes = None
+    if linear_values:
+        linear_values_bytes = df_to_pq_bytes(
+            pd.DataFrame(linear_values).explode(["leaf_features", "leaf_coeff"])
+        )
+
+    return (
+        front_str,
+        tree_value_bytes,
+        node_values_bytes,
+        leaf_values_bytes,
+        linear_values_bytes,
+        back_str,
+    )
 
 
-def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) -> str:
-    front_str, trees, back_str = compressed_state
+def _decompress_booster_handle(
+    compressed_state: Tuple[str, bytes, bytes, bytes, bytes, str]
+) -> str:
+    (
+        front_str,
+        trees_df_bytes,
+        nodes_df_bytes,
+        leaf_value_bytes,
+        linear_values_bytes,
+        back_str,
+    ) = compressed_state
     assert type(front_str) == str
-    assert type(trees) == list
     assert type(back_str) == str
 
-    handle = front_str
+    trees_df = pq_bytes_to_df(trees_df_bytes)
+    nodes_df = pq_bytes_to_df(nodes_df_bytes).groupby("tree_idx").agg(lambda x: list(x))
+    leaf_values_df = (
+        pq_bytes_to_df(leaf_value_bytes).groupby("tree_idx").agg(lambda x: list(x))
+    )
 
-    for i, tree in enumerate(trees):
-        assert type(tree) == dict
-        assert tree.keys() == {
-            "num_leaves",
-            "num_cat",
-            "split_feature",
-            "threshold",
-            "decision_type",
-            "left_child",
-            "right_child",
-            "leaf_value",
-            "is_linear",
-            "shrinkage",
-        }
-
-        num_leaves = len(tree["leaf_value"])
-        num_nodes = len(tree["split_feature"])
-
-        tree_str = f"Tree={i}\n"
-        tree_str += f"num_leaves={tree['num_leaves']}\nnum_cat={tree['num_cat']}\nsplit_feature="
-        tree_str += " ".join([str(x) for x in tree["split_feature"]])
-        tree_str += "\nsplit_gain=" + ("0 " * num_nodes)[:-1]
-        threshold = decompress_half_int_float_array(tree["threshold"])
-        tree_str += "\nthreshold=" + " ".join([str(x) for x in threshold])
-        tree_str += "\ndecision_type=" + " ".join(
-            [str(x) for x in tree["decision_type"]]
+    # merge trees_df, nodes_df, and leaf_values_df on tree_idx
+    trees_df = trees_df.merge(nodes_df, on="tree_idx")
+    trees_df = trees_df.merge(leaf_values_df, on="tree_idx")
+    if linear_values_bytes is not None:
+        linear_values_df = (
+            pq_bytes_to_df(linear_values_bytes)
+            .groupby("tree_idx")
+            .agg(lambda x: list(x))
         )
-        tree_str += "\nleft_child=" + " ".join([str(x) for x in tree["left_child"]])
-        tree_str += "\nright_child=" + " ".join([str(x) for x in tree["right_child"]])
-        tree_str += "\nleaf_value=" + " ".join([str(x) for x in tree["leaf_value"]])
-        tree_str += "\nleaf_weight=" + ("0 " * num_leaves)[:-1]
-        tree_str += "\nleaf_count=" + ("0 " * num_leaves)[:-1]
-        tree_str += "\ninternal_value=" + ("0 " * num_nodes)[:-1]
-        tree_str += "\ninternal_weight=" + ("0 " * num_nodes)[:-1]
-        tree_str += "\ninternal_count=" + ("0 " * num_nodes)[:-1]
-        tree_str += f"\nis_linear={tree['is_linear']}"
-        tree_str += f"\nshrinkage={tree['shrinkage']}"
-        tree_str += "\n\n\n"
+        trees_df = trees_df.merge(linear_values_df, on="tree_idx")
 
-        handle += tree_str
-    handle += back_str
-    return handle
+    tree_strings = [front_str]
+
+    for i, tree in trees_df.iterrows():
+        num_leaves = int(tree["num_leaves"])
+        num_nodes = num_leaves - 1
+
+        # add the appropriate block if those values are present
+        if tree["is_linear"]:
+            linear_str = f"""
+leaf_const={" ".join(str(x) for x in tree['leaf_const'])}
+num_features={" ".join(str(x) for x in tree['num_features'])}
+leaf_features={" ".join(["" if f == -1 else str(int(f)) for f in tree['leaf_features']])}
+leaf_coeff={" ".join(["" if np.isnan(f) else str(f) for f in tree['leaf_coeff']])}"""
+        else:
+            linear_str = ""
+
+        tree_strings.append(
+            f"""Tree={i}
+num_leaves={int(tree["num_leaves"])}
+num_cat={tree['num_cat']}
+split_feature={' '.join([str(x) for x in tree["split_feature"]])}
+split_gain={("0" * num_nodes)[:-1]}
+threshold={' '.join([str(x) for x in tree['threshold']])}
+decision_type={' '.join([str(x) for x in tree["decision_type"]])}
+left_child={" ".join([str(x) for x in tree["left_child"]])}
+right_child={" ".join([str(x) for x in tree["right_child"]])}
+leaf_value={" ".join([str(x) for x in tree["leaf_value"]])}
+leaf_weight={("0 " * num_leaves)[:-1]}
+leaf_count={("0 " * num_leaves)[:-1]}
+internal_value={("0 " * num_nodes)[:-1]}
+internal_weight={("0 " * num_nodes)[:-1]}
+internal_count={("0 " * num_nodes)[:-1]}
+is_linear={tree['is_linear']}{linear_str}
+shrinkage={tree['shrinkage']}
+
+
+"""
+        )
+
+    tree_strings.append(back_str)
+
+    return "".join(tree_strings)

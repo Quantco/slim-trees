@@ -9,6 +9,7 @@ dependencies:
   - pre-commit
   - pandas
   - scikit-learn
+  - pyarrow
   - pytest>=7.0
   - setuptools_scm
   - tbump
