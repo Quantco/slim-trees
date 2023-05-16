@@ -11,7 +11,11 @@ from util import (
 )
 
 from slim_trees import dump_lgbm_compressed
-from slim_trees.lgbm_booster import _booster_pickle
+from slim_trees.lgbm_booster import (
+    _booster_pickle,
+    _compress_booster_state,
+    _decompress_booster_state,
+)
 from slim_trees.pickling import dump_compressed, load_compressed
 
 
@@ -20,7 +24,35 @@ def lgbm_regressor(rng):
     return LGBMRegressor(random_state=rng)
 
 
-def test_compresed_predictions(diabetes_toy_df, lgbm_regressor, tmp_path):
+@pytest.fixture
+def lgbm_regressor_linear(rng):
+    return LGBMRegressor(random_state=rng, linear_trees=True)
+
+
+@pytest.mark.xfail(reason="reconstructed model string is not expected to be equal")
+def test_model_string_equality(diabetes_toy_df, lgbm_regressor):
+    """
+    This test should fail because the model string
+    will not be equivalent since we're omitting values.
+    Nevertheless, for required features, some string rows should be equal.
+    This helps in debugging that.
+    """
+    lgbm_regressor.fit(*diabetes_toy_df)
+
+    # get regular model string
+    model_str = lgbm_regressor.booster_.__reduce__()[2]["handle"]
+
+    # get our reconstructed model string
+    compressed_state = _compress_booster_state(lgbm_regressor.booster_.__reduce__()[2])
+    reconstructed_model_str = _decompress_booster_state(compressed_state)["handle"]
+
+    assert model_str == reconstructed_model_str
+
+
+@pytest.mark.parametrize(
+    "lgbm_regressor", [lgbm_regressor, lgbm_regressor_linear], indirect=True
+)
+def test_compressed_predictions(diabetes_toy_df, lgbm_regressor, tmp_path):
     X, y = diabetes_toy_df
     lgbm_regressor.fit(X, y)
 
