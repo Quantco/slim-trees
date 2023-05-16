@@ -197,7 +197,7 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
     assert type(trees) == list
     assert type(back_str) == str
 
-    front_str += "tree_sizes=" + " ".join(["0" for t in trees]) + "\n"
+    # front_str += "tree_sizes=" + " ".join(["0" for t in trees]) + "\n"
 
     handle = front_str
     for i, tree in enumerate(trees):
