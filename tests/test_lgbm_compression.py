@@ -37,6 +37,7 @@ def test_model_string_equality(diabetes_toy_df, lgbm_regressor):
     Nevertheless, for required features, some string rows should be equal.
     This helps in debugging that.
     """
+    # lgbm_regressor = lgbm_regressor_linear
     lgbm_regressor.fit(*diabetes_toy_df)
 
     # get regular model string
