@@ -227,18 +227,15 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
         tree_str += f"\nis_linear={tree['is_linear']}"
         if is_linear:
             # TODO: attributes: leaf_features, leaf_coeff, leaf_const, num_features
-            tree_str += f"\nleaf_const={' '.join(str(x) for x in tree['leaf_const'])}"
-            tree_str += (
-                f"\nnum_features={' '.join(str(x) for x in tree['num_features'])}"
+            tree_str += "\nleaf_const=" + " ".join(str(x) for x in tree["leaf_const"])
+            tree_str += "\nnum_features=" + " ".join(
+                str(x) for x in tree["num_features"]
             )
-            tree_str += (
-                f"\nleaf_features"
-                f"={' '.join(['' if f == -1 else str(int(f)) for f in tree['leaf_features']])}"
+            tree_str += "\nleaf_features=" + " ".join(
+                "" if f == -1 else str(int(f)) for f in tree["leaf_features"]
             )
-
-            tree_str += (
-                f"\nleaf_coeff"
-                f"={' '.join(['' if np.isnan(f) else str(f) for f in tree['leaf_coeff']])}"
+            tree_str += "\nleaf_coeff=" + " ".join(
+                "" if np.isnan(f) else str(f) for f in tree["leaf_coeff"]
             )
 
         tree_str += f"\nshrinkage={int(tree['shrinkage'])}"
