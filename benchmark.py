@@ -1,6 +1,4 @@
-import io
 import itertools
-import lzma
 import pickle
 import textwrap
 import time
@@ -11,9 +9,8 @@ import lightgbm as lgb
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 from examples.utils import generate_dataset
-from slim_trees.lgbm_booster import dump as dump_lgbm
-from slim_trees.pickling import get_pickled_size
-from slim_trees.sklearn_tree import dump as dump_sklearn
+from slim_trees import dumps_lgbm_compressed, dumps_sklearn_compressed
+from slim_trees.pickling import dumps_compressed, get_pickled_size, loads_compressed
 
 MODELS_PATH = "examples/benchmark_models"
 
@@ -219,39 +216,18 @@ def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
     return (textwrap.dedent(header) + "\n".join(formatted_rows)).strip()
 
 
-def dumps(model, dump_func):
-    bytes_buf = io.BytesIO()
-    dump_func(model, bytes_buf)
-    return bytes_buf.getvalue()
-
-
-def dumps_lzma(model, dump_func=None):
-    if dump_func is None:
-        dump_func = pickle.dump
-    bytes_buf = io.BytesIO()
-    dump_func(model, bytes_buf)
-    return lzma.compress(bytes_buf.getvalue())
-
-
-def loads_lzma(data):
-    decompressed = lzma.decompress(data)
-    return pickle.loads(decompressed)
-
-
 if __name__ == "__main__":
-    dumps_sklearn_args = (lambda x: dumps(x, dump_sklearn),)
-    dumps_lgbm_args = (lambda x: dumps(x, dump_lgbm),)
     dumps_sklearn_lzma_args = (
-        lambda x: dumps_lzma(x, dump_sklearn),
-        loads_lzma,
-        dumps_lzma,
-        loads_lzma,
+        lambda x: dumps_sklearn_compressed(x, "lzma"),
+        lambda x: loads_compressed(x, "lzma"),
+        lambda x: dumps_compressed(x, "lzma"),
+        lambda x: loads_compressed(x, "lzma"),
     )
     dumps_lgbm_lzma_args = (
-        lambda x: dumps_lzma(x, dump_lgbm),
-        loads_lzma,
-        dumps_lzma,
-        loads_lzma,
+        lambda x: dumps_lgbm_compressed(x, "lzma"),
+        lambda x: loads_compressed(x, "lzma"),
+        lambda x: dumps_compressed(x, "lzma"),
+        lambda x: loads_compressed(x, "lzma"),
     )
     models = [
         ("sklearn rf 20M", train_sklearn_rf_20m),
@@ -267,9 +243,9 @@ if __name__ == "__main__":
 
     def get_dumps_args(model_name, train_func):
         if "sklearn" in model_name:
-            return (model_name, train_func) + dumps_sklearn_args
+            return model_name, train_func, dumps_sklearn_compressed
         elif "lgbm" in model_name:
-            return (model_name, train_func) + dumps_lgbm_args
+            return model_name, train_func, dumps_lgbm_compressed
         else:
             raise ValueError(f"Unknown model name: {model_name}")
 

@@ -15,7 +15,12 @@ from typing import Any, Optional, Union
 
 import pkg_resources
 
-from slim_trees.pickling import dump_compressed, load_compressed
+from slim_trees.pickling import (
+    dump_compressed,
+    dumps_compressed,
+    load_compressed,
+    loads_compressed,
+)
 
 try:
     __version__ = pkg_resources.get_distribution(__name__).version
@@ -24,9 +29,13 @@ except Exception:
 
 __all__ = [
     "dump_compressed",
+    "dumps_compressed",
     "load_compressed",
+    "loads_compressed",
     "dump_sklearn_compressed",
+    "dumps_sklearn_compressed",
     "dump_lgbm_compressed",
+    "dumps_lgbm_compressed",
 ]
 
 
@@ -49,6 +58,24 @@ def dump_sklearn_compressed(
     dump_compressed(model, path, compression, dump)
 
 
+def dumps_sklearn_compressed(
+    model: Any, compression: Optional[Union[str, dict]] = None
+) -> bytes:
+    """
+    Pickles a model and returns the saved object as bytes.
+
+    Saves the parameters of the model as int16 and float32 instead of int64 and float64.
+    :param model: the model to save
+    :param compression: the compression method used. Either a string or a dict with key 'method' set
+                        to the compression method and other key-value pairs are forwarded to `open`
+                        of the compression library.
+                        Options: ["no", "lzma", "gzip", "bz2"]
+    """
+    from slim_trees.sklearn_tree import dumps
+
+    return dumps_compressed(model, compression, dumps)
+
+
 def dump_lgbm_compressed(
     model: Any, path: Union[str, Path], compression: Optional[Union[str, dict]] = None
 ):
@@ -66,3 +93,21 @@ def dump_lgbm_compressed(
     from slim_trees.lgbm_booster import dump
 
     dump_compressed(model, path, compression, dump)
+
+
+def dumps_lgbm_compressed(
+    model: Any, compression: Optional[Union[str, dict]] = None
+) -> bytes:
+    """
+    Pickles a model and returns the saved object as bytes.
+
+    Saves the parameters of the model as int16 and float32 instead of int64 and float64.
+    :param model: the model to save
+    :param compression: the compression method used. Either a string or a dict with key 'method' set
+                        to the compression method and other key-value pairs are forwarded to `open`
+                        of the compression library.
+                        Options: ["no", "lzma", "gzip", "bz2"]
+    """
+    from slim_trees.lgbm_booster import dumps
+
+    return dumps_compressed(model, compression, dumps)

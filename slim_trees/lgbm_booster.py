@@ -1,4 +1,5 @@
 import copyreg
+import io
 import os
 import pickle
 import re
@@ -27,6 +28,12 @@ def dump(model: Any, file: BinaryIO):
     p.dispatch_table = copyreg.dispatch_table.copy()
     p.dispatch_table[Booster] = _booster_pickle
     p.dump(model)
+
+
+def dumps(model: Any) -> bytes:
+    bytes_io = io.BytesIO()
+    dump(model, bytes_io)
+    return bytes_io.getvalue()
 
 
 def _booster_pickle(booster: Booster):
