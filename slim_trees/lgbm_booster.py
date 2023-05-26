@@ -197,8 +197,6 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
     assert type(trees) == list
     assert type(back_str) == str
 
-    # front_str += "tree_sizes=" + " ".join(["0" for t in trees]) + "\n"
-
     handle = front_str
     for i, tree in enumerate(trees):
         _validate_tree_structure(tree)
@@ -226,7 +224,6 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
         tree_str += "\ninternal_count=" + ("0 " * num_nodes)[:-1]
         tree_str += f"\nis_linear={tree['is_linear']}"
         if is_linear:
-            # TODO: attributes: leaf_features, leaf_coeff, leaf_const, num_features
             tree_str += "\nleaf_const=" + " ".join(str(x) for x in tree["leaf_const"])
             tree_str += "\nnum_features=" + " ".join(
                 str(x) for x in tree["num_features"]
