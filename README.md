@@ -13,7 +13,7 @@ The compression is performed by modifying how the model is pickled by Python's `
 ```bash
 pip install slim-trees
 # or
-mamba install slim-trees -c conda-forge
+micromamba install slim-trees -c conda-forge
 ```
 
 ## Usage
@@ -72,9 +72,23 @@ with open("model.pkl", "rb") as f:
     model = pickle.load(f)
 ```
 
----
+### Save your model as `bytes`
 
-### drop-in replacement for pickle
+You can also save the model as `bytes` instead of in a file similar to the `pickle.dumps` method.
+
+```python
+from slim_trees import dumps_sklearn_compressed, loads_compressed
+
+X, y = ...
+model = RandomForestClassifier()
+model.fit(X, y)
+
+data = dumps_sklearn_compressed(model, compression="lzma")
+...
+model_loaded = loads_compressed(data, compression="lzma")
+```
+
+### Drop-in replacement for pickle
 
 You can also use the `slim_trees.sklearn_tree.dump` or `slim_trees.lgbm_booster.dump` functions as drop-in replacements for `pickle.dump`.
 
@@ -99,9 +113,8 @@ git clone git@github.com:pavelzw/slim-trees.git
 cd slim-trees
 
 # create and activate a fresh environment named slim_trees
-# see environment.yml for details
-mamba env create
-conda activate slim_trees
+micromamba create -f environment.yml
+micromamba activate slim_trees
 
 pre-commit install
 pip install --no-build-isolation -e .
