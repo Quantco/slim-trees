@@ -1,12 +1,14 @@
 # Slim Trees
 
-[![CI](https://github.com/pavelzw/slim-trees/actions/workflows/ci.yml/badge.svg)](https://github.com/pavelzw/slim-trees/actions/workflows/ci.yml)
+[![CI](https://github.com/quantco/slim-trees/actions/workflows/ci.yml/badge.svg)](https://github.com/quantco/slim-trees/actions/workflows/ci.yml)
 [![conda-forge](https://img.shields.io/conda/vn/conda-forge/slim-trees?logoColor=white&logo=conda-forge)](https://anaconda.org/conda-forge/slim-trees)
 [![pypi-version](https://img.shields.io/pypi/v/slim-trees.svg?logo=pypi&logoColor=white)](https://pypi.org/project/slim-trees)
 [![python-version](https://img.shields.io/pypi/pyversions/slim-trees?logoColor=white&logo=python)](https://pypi.org/project/slim-trees)
 
 `slim-trees` is a Python package for saving and loading compressed `sklearn` Tree-based and `lightgbm` models.
 The compression is performed by modifying how the model is pickled by Python's `pickle` module.
+
+We presented this library at PyData Berlin 2023, check out the [slides](.github/assets/slim-trees-presentation.pdf)!
 
 ## Installation
 
@@ -95,7 +97,7 @@ with open("model.pkl", "wb") as f:
 You can install the package in development mode using:
 
 ```bash
-git clone git@github.com:pavelzw/slim-trees.git
+git clone https://github.com/quantco/slim-trees.git
 cd slim-trees
 
 # create and activate a fresh environment named slim_trees
