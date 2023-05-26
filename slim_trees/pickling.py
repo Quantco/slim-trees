@@ -92,15 +92,42 @@ def dump_compressed(
         dump_function(obj, file)
 
 
+def dumps_compressed(
+    obj: Any,
+    compression: Optional[Union[str, dict]] = None,
+    dump_function: Optional[Callable] = None,
+) -> bytes:
+    """
+    Pickles a model and returns the pickled bytes. If compression is not specified, it won't use
+    any.
+    :param obj: the object to pickle
+    :param compression: the compression method used. Either a string or a dict with key 'method' set
+                        to the compression method and other key-value pairs are forwarded to open()
+                        of the compression library. Defaults to 'no' compression.
+                        Inspired by the pandas.to_csv interface.
+    :param dump_function: the function being called to dump the object, can be a custom pickler.
+                          Defaults to pickle.dumps()
+    """
+    if compression is None:
+        compression = "no"
+
+    if dump_function is None:
+        dump_function = pickle.dumps
+
+    compression_method, kwargs = _unpack_compression_args(compression, None)
+    data_uncompressed = dump_function(obj)
+    return _get_compression_library(compression_method).compress(data_uncompressed)
+
+
 def load_compressed(
     path: Union[str, pathlib.Path], compression: Optional[Union[str, dict]] = None
 ) -> Any:
     """
     Loads a compressed model.
     :param path: where to load the object from
-    :param compression: the compression method used. Either a string or a dict with key 'method' set
-                        to the compression method and other key-value pairs are forwarded to open()
-                        of the compression library.
+    :param compression: the compression method used. Either a string or a dict with key 'method'
+                        set to the compression method and other key-value pairs which are forwarded
+                        to open() of the compression library.
                         Inspired by the pandas.to_csv interface.
     """
     compression_method, kwargs = _unpack_compression_args(compression, path)
@@ -108,6 +135,23 @@ def load_compressed(
         path, mode="rb", **kwargs
     ) as file:
         return pickle.load(file)
+
+
+def loads_compressed(data: bytes, compression: Optional[Union[str, dict]] = None):
+    """
+    Loads a compressed model.
+    :param data: bytes containing the pickled object.
+    :param compression: the compression method used. Either a string or a dict with key 'method'
+                        set to the compression method and other key-value pairs which are forwarded
+                        to open() of the compression library. Defaults to 'no' compression.
+                        Inspired by the pandas.to_csv interface.
+    """
+    if compression is None:
+        compression = "no"
+
+    compression_method, kwargs = _unpack_compression_args(compression, None)
+    data_uncompressed = _get_compression_library(compression_method).decompress(data)
+    return pickle.loads(data_uncompressed)
 
 
 def get_pickled_size(
