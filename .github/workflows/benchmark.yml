@@ -35,10 +35,45 @@ jobs:
           echo "_(benchmark **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_" >> result.md
           cat benchmark.md >> result.md
       - name: Comment on PR
+        # thollander/actions-comment-pull-request is not whitelisted
+        uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
-        uses: thollander/actions-comment-pull-request@v2
         with:
-          filePath: result.md
-          comment_tag: benchmark
+          script: |
+            fs = require('fs')
+
+            const createOrUpdateComment = async (
+              content,
+            ) => {
+              // Get all comments
+              const comments = await github.rest.issues.listComments({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              })
+
+              // Check if any of the comments was posted by the bot and could be replaced
+              for (const comment of comments.data) {
+                if (comment.user?.login === 'github-actions[bot]') {
+                  await github.rest.issues.updateComment({
+                    comment_id: comment.id,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    body: content
+                  })
+                  return
+                }
+              }
+
+              // If not, post a new comment
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: content,
+              })
+            }
+
+            createOrUpdateComment(fs.readFileSync('result.md', 'utf8'))
       - name: Add benchmark to Job Summary
         run: cat benchmark.md >> "$GITHUB_STEP_SUMMARY"
