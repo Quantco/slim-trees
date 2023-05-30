@@ -54,6 +54,7 @@ jobs:
               // Check if any of the comments was posted by the bot and could be replaced
               const heading = content.split('\n')[0];
               for (const comment of comments.data) {
+                console.log(comment.user?.login)
                 if (comment.user?.login === 'github-actions[bot]' && comment.body?.startsWith(heading)) {
                   await github.rest.issues.updateComment({
                     comment_id: comment.id,
