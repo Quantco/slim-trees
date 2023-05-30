@@ -46,9 +46,9 @@ jobs:
             ) => {
               // Get all comments
               const comments = await github.rest.issues.listComments({
-                issue_number: github.context.issue.number,
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo
               })
 
               // Check if any of the comments was posted by the bot and could be replaced
@@ -57,8 +57,8 @@ jobs:
                 if (comment.user?.login === 'github-actions[bot]' && comment.body?.startsWith(heading)) {
                   await github.rest.issues.updateComment({
                     comment_id: comment.id,
-                    owner: github.context.repo.owner,
-                    repo: github.context.repo.repo,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
                     body: content
                   })
                   return
@@ -67,9 +67,9 @@ jobs:
 
               // If not, post a new comment
               await github.rest.issues.createComment({
-                issue_number: github.context.issue.number,
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo,
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
                 body: content,
               })
             }
