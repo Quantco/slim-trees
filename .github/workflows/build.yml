@@ -11,6 +11,9 @@ jobs:
       new-version: ${{ steps.version-metadata.outputs.newVersion }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          # required for version metadata action
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: 3.8
