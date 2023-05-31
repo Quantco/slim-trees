@@ -24,19 +24,19 @@ jobs:
   release:
     # if: github.ref == 'refs/heads/main'
     # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [build]
+    # needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: artifact
-          path: dist
+      # - uses: actions/download-artifact@v3
+      #   with:
+      #     name: artifact
+      #     path: dist
       - uses: Quantco/ui-actions/version-metadata@v1
         id: version-metadata
         with:
           file: slim_trees/_version.py
           token: ${{ secrets.GITHUB_TOKEN }}
-          version-extraction-override: 'command:./.github/scripts/read_version.sh'
+          version-extraction-override: 'command:./read_version.sh'
       - run: |
           echo "Version changed: ${{ steps.version-metadata.outputs.changed }}"
       - run: |
