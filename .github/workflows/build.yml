@@ -6,6 +6,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version-changed: ${{ steps.version-metadata.outputs.changed }}
+      new-version: ${{ steps.version-metadata.outputs.newVersion }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -20,41 +23,40 @@ jobs:
         with:
           name: artifact
           path: dist/*
-
-  release:
-    # if: github.ref == 'refs/heads/main'
-    # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    # needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: artifact
-      #     path: dist
       - uses: Quantco/ui-actions/version-metadata@v1
         id: version-metadata
         with:
           file: ./slim_trees/_version.py
           token: ${{ secrets.GITHUB_TOKEN }}
           version-extraction-override: 'command:./.github/scripts/read_version.sh'
-      - run: |
-          echo "Version changed: ${{ steps.version-metadata.outputs.changed }}"
-      - run: |
-          echo "New version: ${{ steps.version-metadata.outputs.newVersion }}"
-      # - name: Publish package on TestPyPi
-      #   uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598
-      #   with:
-      #     user: __token__
-      #     password: ${{ secrets.TEST_PYPI_TOKEN }}
-      #     repository-url: https://test.pypi.org/legacy/
-      # - name: Publish package on PyPi
-      #   uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598
-      #   with:
-      #     user: __token__
-      #     password: ${{ secrets.PYPI_TOKEN }}
-      # - name: Create release
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     generate_release_notes: true
-      #     draft: true
+
+  release:
+    if: github.ref == 'refs/heads/main' && needs.build.outputs.version-changed == 'true'
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+      - name: Publish package on TestPyPi
+        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+      - name: Publish package on PyPi
+        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
+      - name: Push v${{ needs.build.outputs.new-version }} tag
+        run: |
+          git tag v${{ needs.build.outputs.new-version }}
+          git push origin v${{ needs.build.outputs.new-version }}
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          tag_name: v${{ needs.build.outputs.new-version }}
+          draft: true
