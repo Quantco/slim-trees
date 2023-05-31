@@ -1,5 +1,8 @@
 name: Build
-on: push
+on:
+  push:
+    branches: [main]
+  pull_request:
 permissions:
   contents: write
 
@@ -31,7 +34,7 @@ jobs:
           version-extraction-override: 'command:./.github/scripts/read_version.sh'
 
   release:
-    if: github.ref == 'refs/heads/main' && needs.build.outputs.version-changed == 'true'
+    if: github.event_name == 'push' && github.ref_name == 'main' && needs.build.outputs.version-changed == 'true'
     needs: [build]
     runs-on: ubuntu-latest
     steps:
