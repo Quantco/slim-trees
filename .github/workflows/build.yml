@@ -36,8 +36,7 @@ jobs:
         with:
           file: slim_trees/_version.py
           token: ${{ secrets.GITHUB_TOKEN }}
-          # first get line with version_info, then extract thing in parantheses, then replace ", " with "."
-          version-extraction-override: 'command:grep "version_info =" | sed "s/^.*(\([^()]*\)).*$/\1/" | sed "s/, /./g"'
+          version-extraction-override: 'command:.github/scripts/read_version.sh'
       - run: |
           echo "Version changed: ${{ steps.version-metadata.outputs.changed }}"
       - run: |
