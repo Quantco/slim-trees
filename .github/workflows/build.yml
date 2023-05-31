@@ -34,7 +34,7 @@ jobs:
       - uses: Quantco/ui-actions/version-metadata@v1
         id: version-metadata
         with:
-          file: slim_trees/_version.py
+          file: ./slim_trees/_version.py
           token: ${{ secrets.GITHUB_TOKEN }}
           version-extraction-override: 'command:./read_version.sh'
       - run: |
