@@ -6,6 +6,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version-changed: ${{ steps.version-metadata.outputs.changed }}
+      new-version: ${{ steps.version-metadata.outputs.newVersion }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -20,9 +23,15 @@ jobs:
         with:
           name: artifact
           path: dist/*
+      - uses: Quantco/ui-actions/version-metadata@v1
+        id: version-metadata
+        with:
+          file: ./slim_trees/_version.py
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version-extraction-override: 'command:./.github/scripts/read_version.sh'
 
   release:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' && needs.build.outputs.version-changed == 'true'
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -41,8 +50,13 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
+      - name: Push v${{ needs.build.outputs.new-version }} tag
+        run: |
+          git tag v${{ needs.build.outputs.new-version }}
+          git push origin v${{ needs.build.outputs.new-version }}
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           generate_release_notes: true
+          tag_name: v${{ needs.build.outputs.new-version }}
           draft: true
