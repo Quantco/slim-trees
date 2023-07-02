@@ -40,7 +40,7 @@ jobs:
           report-title: "Unit tests Linux - Python ${{ matrix.PYTHON_VERSION }}"
 
   linux-unittests-pixi:
-    name: "Unit tests - Python ${{ matrix.PYTHON_VERSION }}"
+    name: "Unit tests Pixi - Python ${{ matrix.PYTHON_VERSION }}"
     timeout-minutes: 15
     runs-on: ubuntu-latest
     strategy:
