@@ -8,6 +8,7 @@ platforms = ["osx-arm64", "osx-64", "linux-64", "linux-aarch64", "linux-ppc64le"
 
 [commands]
 test = "pytest"
+lint = "pre-commit run --all"
 
 [dependencies]
 python = ">=3.8"
