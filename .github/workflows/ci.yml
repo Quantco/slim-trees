@@ -39,6 +39,30 @@ jobs:
         with:
           report-title: "Unit tests Linux - Python ${{ matrix.PYTHON_VERSION }}"
 
+  linux-unittests-pixi:
+    name: "Unit tests Pixi - Python ${{ matrix.PYTHON_VERSION }}"
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        PYTHON_VERSION: ['3.11']
+    steps:
+      - uses: actions/checkout@v3
+      # TODO: move to action once it is available
+      - name: Set up pixi
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/prefix-dev/pixi/main/install/install.sh | bash
+      - name: Install dependencies
+        run: |
+          pixi install
+          pixi run pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
+      - name: Run unittests
+        uses: pavelzw/pytest-action@v2
+        with:
+          custom-pytest: pixi run pytest
+          report-title: "Unit tests Linux Pixi - Python ${{ matrix.PYTHON_VERSION }}"
+
   pre-commit:  # todo switch to pre-commit.ci
     name: "Pre-commit checks"
     timeout-minutes: 15

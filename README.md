@@ -108,18 +108,30 @@ with open("model.pkl", "wb") as f:
 
 ## Development Installation
 
-You can install the package in development mode using:
+You can install the package in development mode using the new conda package manager [`pixi`](https://github.com/prefix-dev/pixi):
 
 ```bash
-git clone https://github.com/quantco/slim-trees.git
-cd slim-trees
+❯ git clone https://github.com/quantco/slim-trees.git
+❯ cd slim-trees
 
-# create and activate a fresh environment named slim_trees
-micromamba create -f environment.yml
-micromamba activate slim_trees
+❯ pixi install
+❯ pixi run pre-commit install
+❯ pixi run pip install --no-deps --disable-pip-version-check --no-build-isolation -e .
+❯ pixi run python
+>>> import slim_trees
+[...]
+❯ pixi run test
+[...]
+```
 
-pre-commit install
-pip install --no-build-isolation -e .
+Alternatively, you can use `micromamba` (or `mamba` or `conda`):
+
+```bash
+❯ micromamba create -f environment.yml
+❯ micromamba activate slim_trees
+
+❯ pre-commit install
+❯ pip install --no-build-isolation -e .
 ```
 
 ## Benchmark
