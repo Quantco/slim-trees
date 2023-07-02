@@ -27,7 +27,7 @@ jobs:
         uses: mamba-org/setup-micromamba@v1
         with:
           cache-environment: true
-          environment-file: environment.yml
+          environment-file: environment-deprecated.yml
           create-args: >-
             python=${{ matrix.PYTHON_VERSION }}
             pytest-md
