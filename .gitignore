@@ -119,3 +119,8 @@ mlruns
 
 # vscode
 .vscode
+
+# pixi
+.pixi
+# this is a library so we don't include pixi.lock
+pixi.lock

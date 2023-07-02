@@ -1,9 +1,43 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.setuptools_scm]
-version_scheme = "post-release"
+[project]
+name = "slim-trees"
+description = "A python package for efficient pickling of ML models."
+version = "0.2.2"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    { name = "Pavel Zwerschke", email = "pavel.zwerschke@quantco.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+lightgbm = [
+    "lightgbm",
+]
+scikit-learn = [
+    "scikit-learn",
+]
+
+[project.urls]
+Homepage = "https://github.com/quantco/slim-trees"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/slim_trees",
+]
 
 [tool.black]
 target-version = ["py38"]

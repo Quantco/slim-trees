@@ -10,10 +10,10 @@ You can pickle a model with custom picklers by specifying dump_function in dump_
 pickling module.
 """
 
+import importlib.metadata
+import warnings
 from pathlib import Path
 from typing import Any, Optional, Union
-
-import pkg_resources
 
 from slim_trees.pickling import (
     dump_compressed,
@@ -23,8 +23,10 @@ from slim_trees.pickling import (
 )
 
 try:
-    __version__ = pkg_resources.get_distribution(__name__).version
-except Exception:
+    __version__ = importlib.metadata.version(__name__)
+except Exception as e:
+    warnings.warn(f"Could not determine version of {__name__}", stacklevel=1)
+    warnings.warn(str(e), stacklevel=1)
     __version__ = "unknown"
 
 __all__ = [

@@ -26,12 +26,15 @@ jobs:
         with:
           name: artifact
           path: dist/*
+      - name: Make sure version in pyproject.toml and pixi.toml are in sync
+        run: |
+          [ "$(yq '.project.version' pixi.toml)" = "$(yq '.project.version' pyproject.toml)" ]
       - uses: Quantco/ui-actions/version-metadata@v1
         id: version-metadata
         with:
-          file: ./slim_trees/_version.py
+          file: ./pixi.toml
           token: ${{ secrets.GITHUB_TOKEN }}
-          version-extraction-override: 'command:./.github/scripts/read_version.sh'
+          version-extraction-override: 'regex:version = "(.*)"'
 
   release:
     if: github.event_name == 'push' && github.ref_name == 'main' && needs.build.outputs.version-changed == 'true'

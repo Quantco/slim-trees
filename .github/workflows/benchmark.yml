@@ -16,7 +16,7 @@ jobs:
       - name: Set up conda env
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: environment.yml
+          environment-file: environment-deprecated.yml
           cache-environment: true
           create-args: python=3.11
       - name: Install repository

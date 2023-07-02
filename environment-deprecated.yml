@@ -1,3 +1,4 @@
+# use pixi.toml instead!
 name: slim_trees
 channels:
   - conda-forge
@@ -8,7 +9,6 @@ dependencies:
   - python>=3.8
   - pre-commit
   - pandas
-  - scikit-learn
+  - scikit-learn <1.3.0
   - pytest>=7.0
-  - setuptools_scm
-  - tbump
+  - hatchling
