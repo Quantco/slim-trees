@@ -16,6 +16,8 @@ We presented this library at PyData Berlin 2023, check out the [slides](.github/
 pip install slim-trees
 # or
 micromamba install slim-trees -c conda-forge
+# or
+pixi add slim-trees
 ```
 
 ## Usage
