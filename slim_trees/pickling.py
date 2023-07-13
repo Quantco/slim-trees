@@ -13,6 +13,10 @@ class _NoCompression:
         self.open = open
         self.compress = lambda data: data
 
+    @staticmethod
+    def decompress(data):
+        return data
+
 
 def _get_compression_from_path(path: Union[str, pathlib.Path]) -> str:
     compressions = {
@@ -120,7 +124,9 @@ def dumps_compressed(
 
 
 def load_compressed(
-    path: Union[str, pathlib.Path], compression: Optional[Union[str, dict]] = None
+    path: Union[str, pathlib.Path],
+    compression: Optional[Union[str, dict]] = None,
+    unpickler_class: type = pickle.Unpickler,
 ) -> Any:
     """
     Loads a compressed model.
@@ -129,15 +135,22 @@ def load_compressed(
                         set to the compression method and other key-value pairs which are forwarded
                         to open() of the compression library.
                         Inspired by the pandas.to_csv interface.
+    :param unpickler_class: custom unpickler class derived from pickle.Unpickler.
+                            This is useful to restrict possible imports or to allow unpickling
+                            when required module or function names have been refactored.
     """
     compression_method, kwargs = _unpack_compression_args(compression, path)
     with _get_compression_library(compression_method).open(
         path, mode="rb", **kwargs
     ) as file:
-        return pickle.load(file)
+        return unpickler_class(file).load()
 
 
-def loads_compressed(data: bytes, compression: Optional[Union[str, dict]] = None):
+def loads_compressed(
+    data: bytes,
+    compression: Optional[Union[str, dict]] = None,
+    unpickler_class: type = pickle.Unpickler,
+) -> Any:
     """
     Loads a compressed model.
     :param data: bytes containing the pickled object.
@@ -145,13 +158,16 @@ def loads_compressed(data: bytes, compression: Optional[Union[str, dict]] = None
                         set to the compression method and other key-value pairs which are forwarded
                         to open() of the compression library. Defaults to 'no' compression.
                         Inspired by the pandas.to_csv interface.
+    :param unpickler_class: custom unpickler class derived from pickle.Unpickler.
+                            This is useful to restrict possible imports or to allow unpickling
+                            when required module or function names have been refactored.
     """
     if compression is None:
         compression = "no"
 
     compression_method, kwargs = _unpack_compression_args(compression, None)
     data_uncompressed = _get_compression_library(compression_method).decompress(data)
-    return pickle.loads(data_uncompressed)
+    return unpickler_class(io.BytesIO(data_uncompressed)).load()
 
 
 def get_pickled_size(

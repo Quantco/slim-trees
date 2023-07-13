@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import numpy as np
 import pytest
@@ -10,9 +11,9 @@ from util import (
     get_load_times,
 )
 
-from slim_trees import dump_lgbm_compressed
+from slim_trees import dump_lgbm_compressed, dumps_lgbm_compressed
 from slim_trees.lgbm_booster import _booster_pickle
-from slim_trees.pickling import dump_compressed, load_compressed
+from slim_trees.pickling import dump_compressed, load_compressed, loads_compressed
 
 
 @pytest.fixture
@@ -82,6 +83,26 @@ def test_tree_version_pickle(diabetes_toy_df, lgbm_regressor):
 def test_tree_version_unpickle(diabetes_toy_df, lgbm_regressor):
     lgbm_regressor.fit(*diabetes_toy_df)
     assert_version_unpickle(_booster_pickle, lgbm_regressor.booster_)
+
+
+class _TestUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if module.startswith("lightgbm"):
+            raise ImportError(f"Module '{module}' not allowed in this test")
+        return super().find_class(module, name)
+
+
+def test_load_compressed_custom_unpickler(tmp_path, lgbm_regressor):
+    model_path = tmp_path / "model_compressed.pickle.lzma"
+    dump_lgbm_compressed(lgbm_regressor, model_path)
+    with pytest.raises(ImportError, match="lightgbm.*not allowed"):
+        load_compressed(model_path, unpickler_class=_TestUnpickler)
+
+
+def test_loads_compressed_custom_unpickler(lgbm_regressor):
+    compressed = dumps_lgbm_compressed(lgbm_regressor)
+    with pytest.raises(ImportError, match="lightgbm.*not allowed"):
+        loads_compressed(compressed, unpickler_class=_TestUnpickler)
 
 
 # todo add tests for large models

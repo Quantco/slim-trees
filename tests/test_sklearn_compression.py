@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import numpy as np
 import pytest
@@ -11,8 +12,8 @@ from util import (
     get_load_times,
 )
 
-from slim_trees import dump_sklearn_compressed
-from slim_trees.pickling import dump_compressed, load_compressed
+from slim_trees import dump_sklearn_compressed, dumps_sklearn_compressed
+from slim_trees.pickling import dump_compressed, load_compressed, loads_compressed
 from slim_trees.sklearn_tree import _tree_pickle
 
 
@@ -124,6 +125,26 @@ def test_tree_version_pickle(diabetes_toy_df, decision_tree_regressor):
 def test_tree_version_unpickle(diabetes_toy_df, decision_tree_regressor):
     decision_tree_regressor.fit(*diabetes_toy_df)
     assert_version_unpickle(_tree_pickle, decision_tree_regressor.tree_)
+
+
+class _TestUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if module.startswith("sklearn"):
+            raise ImportError(f"Module '{module}' not allowed in this test")
+        return super().find_class(module, name)
+
+
+def test_load_compressed_custom_unpickler(tmp_path, random_forest_regressor):
+    model_path = tmp_path / "model_compressed.pickle.lzma"
+    dump_sklearn_compressed(random_forest_regressor, model_path)
+    with pytest.raises(ImportError, match="sklearn.*not allowed"):
+        load_compressed(model_path, unpickler_class=_TestUnpickler)
+
+
+def test_loads_compressed_custom_unpickler(random_forest_regressor):
+    compressed = dumps_sklearn_compressed(random_forest_regressor)
+    with pytest.raises(ImportError, match="sklearn.*not allowed"):
+        loads_compressed(compressed, unpickler_class=_TestUnpickler)
 
 
 # todo add tests for large models
