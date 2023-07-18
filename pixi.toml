@@ -1,6 +1,6 @@
 [project] # TODO: move to pyproject.toml once pixi supports it
 name = "slim-trees"
-version = "0.2.1"
+version = "0.2.2"
 description = "A python package for efficient pickling of ML models."
 authors = ["Pavel Zwerschke <pavelzw@gmail.com>"]
 channels = ["conda-forge"]
@@ -13,7 +13,7 @@ lint = "pre-commit run --all"
 [dependencies]
 python = ">=3.8"
 pip = "*"
-lightgbm = "*"
+lightgbm = "<4.0"
 numpy = "*"
 pre-commit = "*"
 pandas = "*"
