@@ -57,6 +57,7 @@ jobs:
         run: |
           pixi install
           pixi run pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
+          cat pixi.lock
       - name: Run unittests
         uses: pavelzw/pytest-action@v2
         with:
