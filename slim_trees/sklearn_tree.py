@@ -87,6 +87,7 @@ def _compress_tree_state(state: dict):
     # do lossless compression for thresholds by downcasting half ints (e.g. 5.5, 10.5, ...) to int8
     thresholds = nodes["threshold"][~is_leaf].astype(dtype_threshold)
     thresholds = compress_half_int_float_array(thresholds)
+    missing_go_to_left = nodes["missing_go_to_left"][~is_leaf].astype("bool")
 
     return {
         "max_depth": state["max_depth"],
@@ -97,6 +98,7 @@ def _compress_tree_state(state: dict):
         "features": features,
         "thresholds": thresholds,
         "values": values,
+        "missing_go_to_left": np.packbits(missing_go_to_left),
     }
 
 
@@ -117,6 +119,7 @@ def _decompress_tree_state(state: dict):
         "features",
         "thresholds",
         "values",
+        "missing_go_to_left",
     }
     n_nodes = state["node_count"]
 
@@ -126,6 +129,7 @@ def _decompress_tree_state(state: dict):
     thresholds = np.zeros(n_nodes, dtype=np.float64)
     # same shape as values but with all nodes instead of only the leaves
     values = np.zeros((n_nodes, *state["values"].shape[1:]), dtype=np.float64)
+    missing_go_to_left = np.zeros(n_nodes, dtype="uint8")
 
     is_leaf = np.unpackbits(state["is_leaf"], count=n_nodes).astype("bool")
     children_left[~is_leaf] = state["children_left"]
@@ -137,6 +141,9 @@ def _decompress_tree_state(state: dict):
     thresholds[~is_leaf] = decompress_half_int_float_array(state["thresholds"])
     thresholds[is_leaf] = -2.0  # threshold of leaves is -2
     values[is_leaf] = state["values"]
+    missing_go_to_left[~is_leaf] = np.unpackbits(
+        state["missing_go_to_left"], count=(~is_leaf).sum()
+    )
 
     dtype = np.dtype(
         [
@@ -147,6 +154,7 @@ def _decompress_tree_state(state: dict):
             ("impurity", "<f8"),
             ("n_node_samples", "<i8"),
             ("weighted_n_node_samples", "<f8"),
+            ("missing_go_to_left", "<u1"),
         ]
     )
     nodes = np.zeros(n_nodes, dtype=dtype)
@@ -154,6 +162,7 @@ def _decompress_tree_state(state: dict):
     nodes["right_child"] = children_right
     nodes["feature"] = features
     nodes["threshold"] = thresholds
+    nodes["missing_go_to_left"] = missing_go_to_left
 
     return {
         "max_depth": state["max_depth"],

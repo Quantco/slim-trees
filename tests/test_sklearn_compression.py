@@ -74,6 +74,10 @@ def test_compressed_internal_structure(
     np.testing.assert_allclose(
         tree_dtype_reduction.value[is_leaf], tree_no_reduction.value[is_leaf]
     )
+    np.testing.assert_allclose(
+        tree_dtype_reduction.missing_go_to_left[~is_leaf],
+        tree_no_reduction.missing_go_to_left[~is_leaf],
+    )
 
 
 def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):
