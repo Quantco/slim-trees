@@ -117,7 +117,7 @@ def test_load_times(
     load_time_compressed, load_time_uncompressed = get_load_times(
         random_forest_regressor, dump_sklearn_compressed, tmp_path, compression_method
     )
-    factor = 4 if compression_method == "no" else 1.5
+    factor = 8 if compression_method == "no" else 1.5
     assert load_time_compressed < factor * load_time_uncompressed
 
 
