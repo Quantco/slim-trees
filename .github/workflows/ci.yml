@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job:
+        include:
           - { PYTHON_VERSION: '3.8', SKLEARN_VERSION: '1.1' }
           - { PYTHON_VERSION: '3.9', SKLEARN_VERSION: '1.1' }
           - { PYTHON_VERSION: '3.10', SKLEARN_VERSION: '1.1' }
