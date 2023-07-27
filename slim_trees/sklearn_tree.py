@@ -123,6 +123,7 @@ def _decompress_tree_state(state: dict):
     """
     Decompresses a Tree state.
     :param state: 'children_left', 'children_right', 'features', 'thresholds', 'values' as keys.
+                  If the sklearn version is >=1.3.0, also 'missing_go_to_left' is a key.
                   'max_depth' and 'node_count' are passed through.
     :return: dictionary with decompressed tree state.
     """
