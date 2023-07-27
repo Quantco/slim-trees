@@ -3,6 +3,7 @@ import pickle
 
 import numpy as np
 import pytest
+from packaging.version import Version
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 from util import (
@@ -74,10 +75,15 @@ def test_compressed_internal_structure(
     np.testing.assert_allclose(
         tree_dtype_reduction.value[is_leaf], tree_no_reduction.value[is_leaf]
     )
-    np.testing.assert_allclose(
-        tree_dtype_reduction.missing_go_to_left[~is_leaf],
-        tree_no_reduction.missing_go_to_left[~is_leaf],
-    )
+    from sklearn import __version__ as _sklearn_version
+
+    sklearn_version = Version(_sklearn_version)
+    sklearn_version_ge_130 = sklearn_version >= Version("1.3")
+    if sklearn_version_ge_130:
+        np.testing.assert_allclose(
+            tree_dtype_reduction.missing_go_to_left[~is_leaf],
+            tree_no_reduction.missing_go_to_left[~is_leaf],
+        )
 
 
 def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):

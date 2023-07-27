@@ -2,6 +2,8 @@ import io
 import os
 import sys
 
+from packaging.version import Version
+
 from slim_trees import __version__ as slim_trees_version
 from slim_trees.compression_utils import (
     compress_half_int_float_array,
@@ -11,7 +13,11 @@ from slim_trees.compression_utils import (
 from slim_trees.utils import check_version
 
 try:
+    from sklearn import __version__ as _sklearn_version
     from sklearn.tree._tree import Tree
+
+    sklearn_version = Version(_sklearn_version)
+    sklearn_version_ge_130 = sklearn_version >= Version("1.3")
 except ImportError:
     print("scikit-learn does not seem to be installed.")
     sys.exit(os.EX_CONFIG)
@@ -87,18 +93,28 @@ def _compress_tree_state(state: dict):
     # do lossless compression for thresholds by downcasting half ints (e.g. 5.5, 10.5, ...) to int8
     thresholds = nodes["threshold"][~is_leaf].astype(dtype_threshold)
     thresholds = compress_half_int_float_array(thresholds)
-    missing_go_to_left = nodes["missing_go_to_left"][~is_leaf].astype("bool")
+
+    if sklearn_version_ge_130:
+        missing_go_to_left = nodes["missing_go_to_left"][~is_leaf].astype("bool")
+    else:
+        missing_go_to_left = None
 
     return {
-        "max_depth": state["max_depth"],
-        "node_count": state["node_count"],
-        "is_leaf": np.packbits(is_leaf),
-        "children_left": children_left,
-        "children_right": children_right,
-        "features": features,
-        "thresholds": thresholds,
-        "values": values,
-        "missing_go_to_left": np.packbits(missing_go_to_left),
+        **{
+            "max_depth": state["max_depth"],
+            "node_count": state["node_count"],
+            "is_leaf": np.packbits(is_leaf),
+            "children_left": children_left,
+            "children_right": children_right,
+            "features": features,
+            "thresholds": thresholds,
+            "values": values,
+        },
+        **(
+            {"missing_go_to_left": np.packbits(missing_go_to_left)}
+            if sklearn_version_ge_130
+            else {}
+        ),
     }
 
 
@@ -111,15 +127,17 @@ def _decompress_tree_state(state: dict):
     """
     assert isinstance(state, dict)
     assert state.keys() == {
-        "max_depth",
-        "node_count",
-        "is_leaf",
-        "children_left",
-        "children_right",
-        "features",
-        "thresholds",
-        "values",
-        "missing_go_to_left",
+        *{
+            "max_depth",
+            "node_count",
+            "is_leaf",
+            "children_left",
+            "children_right",
+            "features",
+            "thresholds",
+            "values",
+        },
+        *({"missing_go_to_left"} if sklearn_version >= Version("1.3") else set()),
     }
     n_nodes = state["node_count"]
 
@@ -141,9 +159,10 @@ def _decompress_tree_state(state: dict):
     thresholds[~is_leaf] = decompress_half_int_float_array(state["thresholds"])
     thresholds[is_leaf] = -2.0  # threshold of leaves is -2
     values[is_leaf] = state["values"]
-    missing_go_to_left[~is_leaf] = np.unpackbits(
-        state["missing_go_to_left"], count=(~is_leaf).sum()
-    )
+    if sklearn_version_ge_130:
+        missing_go_to_left[~is_leaf] = np.unpackbits(
+            state["missing_go_to_left"], count=(~is_leaf).sum()
+        )
 
     dtype = np.dtype(
         [
@@ -154,15 +173,16 @@ def _decompress_tree_state(state: dict):
             ("impurity", "<f8"),
             ("n_node_samples", "<i8"),
             ("weighted_n_node_samples", "<f8"),
-            ("missing_go_to_left", "<u1"),
         ]
+        + ([("missing_go_to_left", "<u1")] if sklearn_version_ge_130 else [])
     )
     nodes = np.zeros(n_nodes, dtype=dtype)
     nodes["left_child"] = children_left
     nodes["right_child"] = children_right
     nodes["feature"] = features
     nodes["threshold"] = thresholds
-    nodes["missing_go_to_left"] = missing_go_to_left
+    if sklearn_version_ge_130:
+        nodes["missing_go_to_left"] = missing_go_to_left
 
     return {
         "max_depth": state["max_depth"],
