@@ -53,7 +53,7 @@ jobs:
       - name: Run unittests
         uses: pavelzw/pytest-action@v2
         with:
-          custom-arguments: ${{ matrix.SKLEARN_VERSION == '' || '-k sklearn' }}${{ matrix.LGBM_VERSION == '' || ' -k lgbm' }}
+          custom-arguments: ${{ matrix.SKLEARN_VERSION != '' && '-k sklearn' || '' }}${{ matrix.LGBM_VERSION != '' && ' -k lgbm' || '' }}
           report-title: >
             Unit tests - Python ${{ matrix.PYTHON_VERSION }}
             ${{ matrix.SKLEARN_VERSION != '' && 'sklearn ' || '' }}${{ matrix.SKLEARN_VERSION }}
