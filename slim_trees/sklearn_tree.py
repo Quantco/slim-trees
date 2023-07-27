@@ -99,6 +99,7 @@ def _compress_tree_state(state: dict):
     else:
         missing_go_to_left = None
 
+    # TODO: make prettier once python 3.8 is not supported anymore
     return {
         **{
             "max_depth": state["max_depth"],
@@ -126,6 +127,7 @@ def _decompress_tree_state(state: dict):
     :return: dictionary with decompressed tree state.
     """
     assert isinstance(state, dict)
+    # TODO: make prettier once python 3.8 is not supported anymore
     assert state.keys() == {
         *{
             "max_depth",
