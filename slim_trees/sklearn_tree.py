@@ -2,6 +2,8 @@ import io
 import os
 import sys
 
+from packaging.version import Version
+
 from slim_trees import __version__ as slim_trees_version
 from slim_trees.compression_utils import (
     compress_half_int_float_array,
@@ -11,7 +13,11 @@ from slim_trees.compression_utils import (
 from slim_trees.utils import check_version
 
 try:
+    from sklearn import __version__ as _sklearn_version
     from sklearn.tree._tree import Tree
+
+    sklearn_version = Version(_sklearn_version)
+    sklearn_version_ge_130 = sklearn_version >= Version("1.3")
 except ImportError:
     print("scikit-learn does not seem to be installed.")
     sys.exit(os.EX_CONFIG)
@@ -88,15 +94,28 @@ def _compress_tree_state(state: dict):
     thresholds = nodes["threshold"][~is_leaf].astype(dtype_threshold)
     thresholds = compress_half_int_float_array(thresholds)
 
+    if sklearn_version_ge_130:
+        missing_go_to_left = nodes["missing_go_to_left"][~is_leaf].astype("bool")
+    else:
+        missing_go_to_left = None
+
+    # TODO: make prettier once python 3.8 is not supported anymore
     return {
-        "max_depth": state["max_depth"],
-        "node_count": state["node_count"],
-        "is_leaf": np.packbits(is_leaf),
-        "children_left": children_left,
-        "children_right": children_right,
-        "features": features,
-        "thresholds": thresholds,
-        "values": values,
+        **{
+            "max_depth": state["max_depth"],
+            "node_count": state["node_count"],
+            "is_leaf": np.packbits(is_leaf),
+            "children_left": children_left,
+            "children_right": children_right,
+            "features": features,
+            "thresholds": thresholds,
+            "values": values,
+        },
+        **(
+            {"missing_go_to_left": np.packbits(missing_go_to_left)}
+            if sklearn_version_ge_130
+            else {}
+        ),
     }
 
 
@@ -104,19 +123,24 @@ def _decompress_tree_state(state: dict):
     """
     Decompresses a Tree state.
     :param state: 'children_left', 'children_right', 'features', 'thresholds', 'values' as keys.
+                  If the sklearn version is >=1.3.0, also 'missing_go_to_left' is a key.
                   'max_depth' and 'node_count' are passed through.
     :return: dictionary with decompressed tree state.
     """
     assert isinstance(state, dict)
+    # TODO: make prettier once python 3.8 is not supported anymore
     assert state.keys() == {
-        "max_depth",
-        "node_count",
-        "is_leaf",
-        "children_left",
-        "children_right",
-        "features",
-        "thresholds",
-        "values",
+        *{
+            "max_depth",
+            "node_count",
+            "is_leaf",
+            "children_left",
+            "children_right",
+            "features",
+            "thresholds",
+            "values",
+        },
+        *({"missing_go_to_left"} if sklearn_version >= Version("1.3") else set()),
     }
     n_nodes = state["node_count"]
 
@@ -126,6 +150,7 @@ def _decompress_tree_state(state: dict):
     thresholds = np.zeros(n_nodes, dtype=np.float64)
     # same shape as values but with all nodes instead of only the leaves
     values = np.zeros((n_nodes, *state["values"].shape[1:]), dtype=np.float64)
+    missing_go_to_left = np.zeros(n_nodes, dtype="uint8")
 
     is_leaf = np.unpackbits(state["is_leaf"], count=n_nodes).astype("bool")
     children_left[~is_leaf] = state["children_left"]
@@ -137,6 +162,10 @@ def _decompress_tree_state(state: dict):
     thresholds[~is_leaf] = decompress_half_int_float_array(state["thresholds"])
     thresholds[is_leaf] = -2.0  # threshold of leaves is -2
     values[is_leaf] = state["values"]
+    if sklearn_version_ge_130:
+        missing_go_to_left[~is_leaf] = np.unpackbits(
+            state["missing_go_to_left"], count=(~is_leaf).sum()
+        )
 
     dtype = np.dtype(
         [
@@ -148,12 +177,15 @@ def _decompress_tree_state(state: dict):
             ("n_node_samples", "<i8"),
             ("weighted_n_node_samples", "<f8"),
         ]
+        + ([("missing_go_to_left", "<u1")] if sklearn_version_ge_130 else [])
     )
     nodes = np.zeros(n_nodes, dtype=dtype)
     nodes["left_child"] = children_left
     nodes["right_child"] = children_right
     nodes["feature"] = features
     nodes["threshold"] = thresholds
+    if sklearn_version_ge_130:
+        nodes["missing_go_to_left"] = missing_go_to_left
 
     return {
         "max_depth": state["max_depth"],
