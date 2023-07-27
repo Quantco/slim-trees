@@ -25,7 +25,7 @@ dependencies = [
 
 [project.optional-dependencies]
 lightgbm = [
-    "lightgbm <4.0",
+    "lightgbm >=3.2,<4.1",
 ]
 scikit-learn = [
     "scikit-learn >=1.1.0,<1.4",

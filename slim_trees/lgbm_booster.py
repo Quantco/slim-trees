@@ -7,6 +7,7 @@ import sys
 from typing import Any, BinaryIO, List, Tuple
 
 import numpy as np
+from packaging.version import Version
 
 from slim_trees import __version__ as slim_trees_version
 from slim_trees.compression_utils import (
@@ -17,7 +18,10 @@ from slim_trees.compression_utils import (
 from slim_trees.utils import check_version
 
 try:
+    from lightgbm import __version__ as _lightgbm_version
     from lightgbm.basic import Booster
+
+    lightgbm_version = Version(_lightgbm_version)
 except ImportError:
     print("LightGBM does not seem to be installed.")
     sys.exit(os.EX_CONFIG)
@@ -57,21 +61,30 @@ def _booster_unpickle(reconstructor, args, compressed_state):
     return booster
 
 
+_handle_key_name = (
+    "_handle" if lightgbm_version.major == 4 else "handle"  # noqa[PLR2004]
+)
+
+
 def _compress_booster_state(state: dict):
     """
     For a given state dictionary, store data in a structured format that can then
     be saved to disk in a way that can be compressed.
     """
     assert type(state) == dict
-    compressed_state = {k: v for k, v in state.items() if k != "handle"}
-    compressed_state["compressed_handle"] = _compress_booster_handle(state["handle"])
+    compressed_state = {k: v for k, v in state.items() if k != _handle_key_name}
+    compressed_state["compressed_handle"] = _compress_booster_handle(
+        state[_handle_key_name]
+    )
     return compressed_state
 
 
 def _decompress_booster_state(compressed_state: dict):
     assert type(compressed_state) == dict
     state = {k: v for k, v in compressed_state.items() if k != "compressed_handle"}
-    state["handle"] = _decompress_booster_handle(compressed_state["compressed_handle"])
+    state[_handle_key_name] = _decompress_booster_handle(
+        compressed_state["compressed_handle"]
+    )
     return state
 
 
@@ -121,8 +134,10 @@ def parse(str_list, dtype):
 
 
 def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
-    if not model_string.startswith("tree\nversion=v3"):
-        raise ValueError("Only v3 is supported for the booster string format.")
+    if not model_string.startswith(f"tree\nversion=v{lightgbm_version.major}"):
+        raise ValueError(
+            f"Only v{lightgbm_version.major} is supported for the booster string format."
+        )
 
     front_str_match = re.search(FRONT_STRING_REGEX, model_string)
     if front_str_match is None:
