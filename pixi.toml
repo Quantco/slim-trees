@@ -1,6 +1,6 @@
 [project] # TODO: move to pyproject.toml once pixi supports it
 name = "slim-trees"
-version = "0.2.2"
+version = "0.2.3"
 description = "A python package for efficient pickling of ML models."
 authors = ["Pavel Zwerschke <pavelzw@gmail.com>"]
 channels = ["conda-forge"]
