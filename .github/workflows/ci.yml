@@ -14,7 +14,7 @@ defaults:
 
 jobs:
   linux-unittests:
-    name: "Unit tests - Python ${{ matrix.PYTHON_VERSION }}"
+    name: "Unit tests - Python ${{ matrix.PYTHON_VERSION }} Sklearn ${{ matrix.SKLEARN_VERSION }}"
     timeout-minutes: 15
     runs-on: ubuntu-latest
     strategy:
@@ -39,7 +39,7 @@ jobs:
       - name: Run unittests
         uses: pavelzw/pytest-action@v2
         with:
-          report-title: "Unit tests Linux - Python ${{ matrix.PYTHON_VERSION }}"
+          report-title: "Unit tests Linux - Python ${{ matrix.PYTHON_VERSION }} - Sklearn ${{ matrix.SKLEARN_VERSION }}"
 
   linux-unittests-pixi:
     name: "Unit tests Pixi - Python ${{ matrix.PYTHON_VERSION }}"
