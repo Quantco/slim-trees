@@ -46,8 +46,8 @@ jobs:
             python=${{ matrix.PYTHON_VERSION }}
             pytest-md
             pytest-emoji
-            scikit-learn${{ matrix.SKLEARN_VERSION == '' && '' || '=' }}${{ matrix.SKLEARN_VERSION }}
-            lightgbm${{ matrix.LGBM_VERSION == '' && '' || '=' }}${{ matrix.LGBM_VERSION }}
+            scikit-learn${{ matrix.SKLEARN_VERSION != '' && '=' || '' }}${{ matrix.SKLEARN_VERSION }}
+            lightgbm${{ matrix.LGBM_VERSION != '' && '=' || '' }}${{ matrix.LGBM_VERSION }}
       - name: Install repository
         run: python -m pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
       - name: Run unittests
