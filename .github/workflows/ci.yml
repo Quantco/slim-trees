@@ -14,7 +14,7 @@ defaults:
 
 jobs:
   linux-unittests:
-    name: >
+    name: >-
       Unit tests - Python ${{ matrix.PYTHON_VERSION }}
       ${{ matrix.SKLEARN_VERSION != '' && 'sklearn ' || '' }}${{ matrix.SKLEARN_VERSION }}
       ${{ matrix.LGBM_VERSION != '' && 'lightgbm ' || '' }}${{ matrix.LGBM_VERSION }}
@@ -54,7 +54,7 @@ jobs:
         uses: pavelzw/pytest-action@v2
         with:
           custom-arguments: ${{ matrix.SKLEARN_VERSION != '' && '-k sklearn' || '' }}${{ matrix.LGBM_VERSION != '' && ' -k lgbm' || '' }}
-          report-title: >
+          report-title: >-
             Unit tests - Python ${{ matrix.PYTHON_VERSION }}
             ${{ matrix.SKLEARN_VERSION != '' && 'sklearn ' || '' }}${{ matrix.SKLEARN_VERSION }}
             ${{ matrix.LGBM_VERSION != '' && 'lightgbm ' || '' }}${{ matrix.LGBM_VERSION }}
