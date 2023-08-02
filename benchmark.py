@@ -1,6 +1,7 @@
 import io
 import lzma
 import pickle
+import sys
 import textwrap
 import time
 from pathlib import Path
@@ -15,10 +16,12 @@ from slim_trees.sklearn_tree import dump_sklearn
 
 MODELS_PATH = "examples/benchmark_models"
 
+
 def onnx_stuff(model):
     from skl2onnx import convert_sklearn
     from skl2onnx.common.data_types import FloatTensorType
-    initial_type = [('float_input', FloatTensorType([None, 100]))]
+
+    initial_type = [("float_input", FloatTensorType([None, 100]))]
     print("Converting sklearn")
     onx = convert_sklearn(model, initial_types=initial_type)
     print("Done")
@@ -29,7 +32,6 @@ def onnx_stuff(model):
         # onx.SerializeToString()
         print("Done")
         # print(len(onx_string))
-
 
 
 def load_model(model_name: str, generate: Callable) -> Any:
@@ -121,7 +123,7 @@ def benchmark_model(  # noqa: PLR0913
 
     model = train_func()
     onnx_stuff(model)
-    exit(0)
+    sys.exit(0)
 
     naive_dump_time = benchmark(base_dumps_func, model)
     naive_pickled = base_dumps_func(model)
