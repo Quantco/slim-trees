@@ -198,8 +198,9 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
     return front_str, trees, back_str
 
 
-def _validate_tree_structure(tree: dict) -> bool:
-    return type(tree) == dict and tree.keys() == {
+def _validate_tree_structure(tree: dict):
+    assert isinstance(tree, dict)
+    if tree.keys() != {
         "num_leaves",
         "num_cat",
         "split_feature",
@@ -210,7 +211,10 @@ def _validate_tree_structure(tree: dict) -> bool:
         "leaf_value",
         "is_linear",
         "shrinkage",
-    }
+    }:
+        raise ValueError(
+            "Invalid tree structure. Do you use an unsupported LightGBM version?"
+        )
 
 
 def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) -> str:
