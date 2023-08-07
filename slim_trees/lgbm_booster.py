@@ -62,7 +62,7 @@ def _booster_unpickle(reconstructor, args, compressed_state):
 
 
 _handle_key_name = (
-    "_handle" if lightgbm_version.major == 4 else "handle"  # noqa[PLR2004]
+    "_handle" if lightgbm_version.major == 4 else "handle"  # noqa: PLR2004
 )
 
 
