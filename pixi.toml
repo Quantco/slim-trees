@@ -6,9 +6,10 @@ authors = ["Pavel Zwerschke <pavelzw@gmail.com>"]
 channels = ["conda-forge"]
 platforms = ["osx-arm64", "osx-64", "linux-64", "linux-aarch64", "linux-ppc64le", "win-64"]
 
-[commands]
+[tasks]
+postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-check -e ."
 test = "pytest"
-lint = "pre-commit run --all"
+lint = "pre-commit run -a"
 
 [dependencies]
 python = ">=3.8"
