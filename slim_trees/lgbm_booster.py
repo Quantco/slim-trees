@@ -213,7 +213,8 @@ def _validate_tree_structure(tree: dict):
         "shrinkage",
     }:
         raise ValueError(
-            "Invalid tree structure. Do you use an unsupported LightGBM version?"
+            "Invalid tree structure. Do you use an unsupported LightGBM version or try to load a "
+            "model that was pickled with a different version of LightGBM?"
         )
 
 

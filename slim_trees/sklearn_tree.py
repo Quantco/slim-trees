@@ -143,7 +143,8 @@ def _decompress_tree_state(state: dict):
         *({"missing_go_to_left"} if sklearn_version >= Version("1.3") else set()),
     }:
         raise ValueError(
-            "Invalid tree structure. Do you use an unsupported scikit-learn version?"
+            "Invalid tree structure. Do you use an unsupported scikit-learn version "
+            "or try to load a model that was pickled with a different version of scikit-learn?"
         )
     n_nodes = state["node_count"]
 
