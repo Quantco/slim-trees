@@ -215,9 +215,9 @@ def _validate_tree_structure(tree: dict) -> bool:
 
 def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) -> str:
     front_str, trees, back_str = compressed_state
-    assert type(front_str) == str
-    assert type(trees) == list
-    assert type(back_str) == str
+    assert isinstance(front_str, str)
+    assert isinstance(trees, list)
+    assert isinstance(back_str, str)
 
     handle = front_str
     for i, tree in enumerate(trees):

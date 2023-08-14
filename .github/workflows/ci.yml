@@ -72,11 +72,11 @@ jobs:
       - name: Install dependencies
         run: |
           pixi install
-          pixi run pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
+          pixi run postinstall
       - name: Run unittests
         uses: pavelzw/pytest-action@v2
         with:
-          custom-pytest: pixi run pytest
+          custom-pytest: pixi run test
           report-title: "Unit tests Linux Pixi - Python ${{ matrix.PYTHON_VERSION }}"
 
   pre-commit:  # todo switch to pre-commit.ci
