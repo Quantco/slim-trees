@@ -129,7 +129,7 @@ def _decompress_tree_state(state: dict):
     """
     assert isinstance(state, dict)
     # TODO: make prettier once python 3.8 is not supported anymore
-    assert state.keys() == {
+    if state.keys() != {
         *{
             "max_depth",
             "node_count",
@@ -141,7 +141,11 @@ def _decompress_tree_state(state: dict):
             "values",
         },
         *({"missing_go_to_left"} if sklearn_version >= Version("1.3") else set()),
-    }
+    }:
+        raise ValueError(
+            "Invalid tree structure. Do you use an unsupported scikit-learn version "
+            "or try to load a model that was pickled with a different version of scikit-learn?"
+        )
     n_nodes = state["node_count"]
 
     children_left = np.zeros(n_nodes, dtype=np.int64)

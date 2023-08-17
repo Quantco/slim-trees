@@ -25,7 +25,8 @@ pixi add slim-trees
 Using `slim-trees` does not affect your training pipeline.
 Simply call `dump_sklearn_compressed` or `dump_lgbm_compressed` to save your model.
 
-> ⚠️ `slim-trees` does not save all the data that would be saved by `sklearn`:
+> [!WARNING]
+> `slim-trees` does not save all the data that would be saved by `sklearn`:
 > only the parameters that are relevant for inference are saved. If you want to save the full model including
 > `impurity` etc. for analytic purposes, we suggest saving both the original using `pickle.dump` for analytics
 > and the slimmed down version using `slim-trees` for production.
