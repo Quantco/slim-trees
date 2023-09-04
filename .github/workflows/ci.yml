@@ -34,7 +34,7 @@ jobs:
           - { PYTHON_VERSION: '3.10', SKLEARN_VERSION: '', LGBM_VERSION: '' }
           - { PYTHON_VERSION: '3.11', SKLEARN_VERSION: '', LGBM_VERSION: '' }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up conda env
         uses: mamba-org/setup-micromamba@v1
         with:
@@ -64,7 +64,7 @@ jobs:
       matrix:
         PYTHON_VERSION: ['3.11']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       # TODO: move to action once it is available
       - name: Set up pixi
         run: |
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Python 3.11
         uses: actions/setup-python@v4
         with:
@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       # https://github.com/rhysd/actionlint/blob/main/docs/usage.md#use-actionlint-on-github-actions
       - name: Download actionlint
         id: get_actionlint
