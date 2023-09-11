@@ -71,7 +71,7 @@ def _compress_booster_state(state: dict):
     For a given state dictionary, store data in a structured format that can then
     be saved to disk in a way that can be compressed.
     """
-    assert type(state) == dict
+    assert isinstance(state, dict)
     compressed_state = {k: v for k, v in state.items() if k != _handle_key_name}
     compressed_state["compressed_handle"] = _compress_booster_handle(
         state[_handle_key_name]
@@ -80,7 +80,7 @@ def _compress_booster_state(state: dict):
 
 
 def _decompress_booster_state(compressed_state: dict):
-    assert type(compressed_state) == dict
+    assert isinstance(compressed_state, dict)
     state = {k: v for k, v in compressed_state.items() if k != "compressed_handle"}
     state[_handle_key_name] = _decompress_booster_handle(
         compressed_state["compressed_handle"]
