@@ -66,11 +66,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: prefix-dev/setup-pixi@v0.2.0
-        with:
-          cache: true
-      - name: Install dependencies
+      - name: Install environment
         run: |
-          pixi install
           pixi run postinstall
       - name: Run unittests
         uses: pavelzw/pytest-action@v2
