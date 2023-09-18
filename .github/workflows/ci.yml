@@ -65,7 +65,7 @@ jobs:
         PYTHON_VERSION: ['3.11']
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.2.0
+      - uses: prefix-dev/setup-pixi@v0.2.1
       - name: Install environment
         run: |
           pixi run postinstall
