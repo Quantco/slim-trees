@@ -60,9 +60,7 @@ def dump_sklearn_compressed(
     dump_compressed(model, path, compression, dump)
 
 
-def dumps_sklearn_compressed(
-    model: Any, compression: Optional[Union[str, dict]] = None
-) -> bytes:
+def dumps_sklearn_compressed(model: Any, compression: Optional[Union[str, dict]] = None) -> bytes:
     """
     Pickles a model and returns the saved object as bytes.
 
@@ -97,9 +95,7 @@ def dump_lgbm_compressed(
     dump_compressed(model, path, compression, dump)
 
 
-def dumps_lgbm_compressed(
-    model: Any, compression: Optional[Union[str, dict]] = None
-) -> bytes:
+def dumps_lgbm_compressed(model: Any, compression: Optional[Union[str, dict]] = None) -> bytes:
     """
     Pickles a model and returns the saved object as bytes.
 

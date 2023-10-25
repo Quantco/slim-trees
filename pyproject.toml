@@ -18,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "numpy",
@@ -38,18 +39,6 @@ Homepage = "https://github.com/quantco/slim-trees"
 include = [
     "/slim_trees",
 ]
-
-[tool.black]
-target-version = ["py38"]
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
 [tool.ruff]
 line-length = 100
@@ -84,7 +73,14 @@ select = [
 ignore = [
     # variable in function should be lowercase
     "N806",
+    # may cause conflicts with ruff formatter
+    "E501",
+    "W191",
 ]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [tool.mypy]
 python_version = "3.8"

@@ -57,9 +57,7 @@ def _unpack_compression_args(
         if isinstance(compression, str):
             return compression, _get_default_kwargs(compression)
         elif isinstance(compression, dict):
-            return compression["method"], {
-                k: compression[k] for k in compression if k != "method"
-            }
+            return compression["method"], {k: compression[k] for k in compression if k != "method"}
         raise ValueError("compression must be either a string or a dict")
     if path is not None:
         # try to find out the compression using the file extension
@@ -90,9 +88,7 @@ def dump_compressed(
         dump_function = pickle.dump
 
     compression_method, kwargs = _unpack_compression_args(compression, path)
-    with _get_compression_library(compression_method).open(
-        path, mode="wb", **kwargs
-    ) as file:
+    with _get_compression_library(compression_method).open(path, mode="wb", **kwargs) as file:
         dump_function(obj, file)
 
 
@@ -140,9 +136,7 @@ def load_compressed(
                             when required module or function names have been refactored.
     """
     compression_method, kwargs = _unpack_compression_args(compression, path)
-    with _get_compression_library(compression_method).open(
-        path, mode="rb", **kwargs
-    ) as file:
+    with _get_compression_library(compression_method).open(path, mode="rb", **kwargs) as file:
         return unpickler_class(file).load()
 
 

@@ -44,7 +44,5 @@ if __name__ == "__main__":
     dump_model_string(model.booster_, "examples/out/model_uncompressed.model")
     dump_model_string(model_compressed.booster_, "examples/out/model_compressed.model")
 
-    evaluate_prediction_difference(
-        model, model_compressed, generate_dataset(n_samples=10000)[0]
-    )
+    evaluate_prediction_difference(model, model_compressed, generate_dataset(n_samples=10000)[0])
     evaluate_compression_performance(model, dump)

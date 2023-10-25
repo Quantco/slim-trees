@@ -58,9 +58,7 @@ def generate_dataset_train_test(
     return train_test_split(X, y, test_size=0.2, random_state=42)
 
 
-def evaluate_compression_performance(
-    model: Any, dump: Callable, print_performance: bool = True
-):
+def evaluate_compression_performance(model: Any, dump: Callable, print_performance: bool = True):
     compressions = ["no", "lzma", "bz2", "gzip"]
     performance = []
     for compression, dump_function in product(compressions, [None, dump]):

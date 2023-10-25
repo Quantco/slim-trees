@@ -26,9 +26,7 @@ def lgbm_regressor_linear(rng):
     return LGBMRegressor(random_state=rng, linear_trees=True)
 
 
-@pytest.mark.parametrize(
-    "lgbm_regressor", [lgbm_regressor, lgbm_regressor_linear], indirect=True
-)
+@pytest.mark.parametrize("lgbm_regressor", [lgbm_regressor, lgbm_regressor_linear], indirect=True)
 def test_compressed_predictions(diabetes_toy_df, lgbm_regressor, tmp_path):
     X, y = diabetes_toy_df
     lgbm_regressor.fit(X, y)

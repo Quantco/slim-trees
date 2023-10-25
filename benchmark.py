@@ -66,16 +66,12 @@ def train_sklearn_rf_1g() -> RandomForestRegressor:
 def train_sklearn_gb_2m() -> GradientBoostingRegressor:
     return load_model(
         "sklearn_gb_2m",
-        lambda: GradientBoostingRegressor(
-            n_estimators=2000, random_state=42, verbose=True
-        ),
+        lambda: GradientBoostingRegressor(n_estimators=2000, random_state=42, verbose=True),
     )
 
 
 def train_lgbm_gbdt_2m() -> lgb.LGBMRegressor:
-    return load_model(
-        "lgbm_gbdt_2m", lambda: lgb.LGBMRegressor(n_estimators=1000, random_state=42)
-    )
+    return load_model("lgbm_gbdt_2m", lambda: lgb.LGBMRegressor(n_estimators=1000, random_state=42))
 
 
 def train_lgbm_gbdt_5m() -> lgb.LGBMRegressor:
