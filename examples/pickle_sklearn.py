@@ -28,5 +28,7 @@ if __name__ == "__main__":
         dump_sklearn_compressed(model, path, "no")
         model_compressed = load_compressed(path, "no")
 
-    evaluate_prediction_difference(model, model_compressed, generate_dataset(n_samples=10000)[0])
+    evaluate_prediction_difference(
+        model, model_compressed, generate_dataset(n_samples=10000)[0]
+    )
     evaluate_compression_performance(model, dump)

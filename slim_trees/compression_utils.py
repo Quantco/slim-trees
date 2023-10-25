@@ -15,7 +15,9 @@ def _is_in_neighborhood_of_int(arr, iinfo, eps=1e-12):
     side of the next int.
     """
     return (
-        (np.minimum(np.abs(arr % 1 - 1), arr % 1) < eps) & (arr >= iinfo.min) & (arr <= iinfo.max)
+        (np.minimum(np.abs(arr % 1 - 1), arr % 1) < eps)
+        & (arr >= iinfo.min)
+        & (arr <= iinfo.max)
     )
 
 
@@ -48,7 +50,9 @@ def compress_half_int_float_array(a, compression_dtype="int8"):
 
 def decompress_half_int_float_array(state):
     n_thresholds = len(state["a2_compressible"]) + len(state["a_incompressible"])
-    is_compressible = np.unpackbits(state["is_compressible"], count=n_thresholds).astype("bool")
+    is_compressible = np.unpackbits(
+        state["is_compressible"], count=n_thresholds
+    ).astype("bool")
     a = np.zeros(len(is_compressible), dtype="float64")
     a[is_compressible] = state["a2_compressible"] / 2.0
     a[~is_compressible] = state["a_incompressible"]

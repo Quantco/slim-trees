@@ -30,7 +30,9 @@ def get_load_times(model, dump_lib_compressed, tmp_path, method):
     load_time_compressed = timeit.timeit(
         lambda: load_compressed(model_path_compressed, method), number=5
     )
-    load_time_uncompressed = timeit.timeit(lambda: load_compressed(model_path, method), number=5)
+    load_time_uncompressed = timeit.timeit(
+        lambda: load_compressed(model_path, method), number=5
+    )
     return load_time_compressed, load_time_uncompressed
 
 

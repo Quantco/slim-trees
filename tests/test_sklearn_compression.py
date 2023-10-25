@@ -45,7 +45,9 @@ def test_compressed_predictions(diabetes_toy_df, random_forest_regressor, tmp_pa
     np.testing.assert_allclose(prediction_no_reduction, prediction_reduction)
 
 
-def test_compressed_internal_structure(diabetes_toy_df, decision_tree_regressor, tmp_path):
+def test_compressed_internal_structure(
+    diabetes_toy_df, decision_tree_regressor, tmp_path
+):
     X, y = diabetes_toy_df
     decision_tree_regressor.fit(X, y)
 
@@ -62,9 +64,13 @@ def test_compressed_internal_structure(diabetes_toy_df, decision_tree_regressor,
     np.testing.assert_array_equal(
         tree_dtype_reduction.children_right, tree_no_reduction.children_right
     )
-    np.testing.assert_array_equal(tree_dtype_reduction.feature, tree_no_reduction.feature)
+    np.testing.assert_array_equal(
+        tree_dtype_reduction.feature, tree_no_reduction.feature
+    )
     # threshold compression should be lossless (even for float compression)
-    np.testing.assert_array_equal(tree_dtype_reduction.threshold, tree_no_reduction.threshold)
+    np.testing.assert_array_equal(
+        tree_dtype_reduction.threshold, tree_no_reduction.threshold
+    )
     is_leaf = tree_dtype_reduction.children_left == -1
     np.testing.assert_allclose(
         tree_dtype_reduction.value[is_leaf], tree_no_reduction.value[is_leaf]
@@ -94,7 +100,9 @@ def test_compression_size(diabetes_toy_df, random_forest_regressor, tmp_path):
 
 
 @pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
-def test_dump_times(diabetes_toy_df, random_forest_regressor, tmp_path, compression_method):
+def test_dump_times(
+    diabetes_toy_df, random_forest_regressor, tmp_path, compression_method
+):
     X, y = diabetes_toy_df
     random_forest_regressor.fit(X, y)
     factor = 4 if compression_method == "no" else 1.5
@@ -106,7 +114,9 @@ def test_dump_times(diabetes_toy_df, random_forest_regressor, tmp_path, compress
 
 
 @pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
-def test_load_times(diabetes_toy_df, random_forest_regressor, tmp_path, compression_method):
+def test_load_times(
+    diabetes_toy_df, random_forest_regressor, tmp_path, compression_method
+):
     X, y = diabetes_toy_df
     random_forest_regressor.fit(X, y)
 

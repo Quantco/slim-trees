@@ -73,14 +73,18 @@ def _compress_booster_state(state: dict):
     """
     assert isinstance(state, dict)
     compressed_state = {k: v for k, v in state.items() if k != _handle_key_name}
-    compressed_state["compressed_handle"] = _compress_booster_handle(state[_handle_key_name])
+    compressed_state["compressed_handle"] = _compress_booster_handle(
+        state[_handle_key_name]
+    )
     return compressed_state
 
 
 def _decompress_booster_state(compressed_state: dict):
     assert isinstance(compressed_state, dict)
     state = {k: v for k, v in compressed_state.items() if k != "compressed_handle"}
-    state[_handle_key_name] = _decompress_booster_handle(compressed_state["compressed_handle"])
+    state[_handle_key_name] = _decompress_booster_handle(
+        compressed_state["compressed_handle"]
+    )
     return state
 
 
@@ -234,7 +238,9 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
         tree_str += "\nsplit_gain=" + ("0 " * num_nodes)[:-1]
         threshold = decompress_half_int_float_array(tree["threshold"])
         tree_str += "\nthreshold=" + " ".join([str(x) for x in threshold])
-        tree_str += "\ndecision_type=" + " ".join([str(x) for x in tree["decision_type"]])
+        tree_str += "\ndecision_type=" + " ".join(
+            [str(x) for x in tree["decision_type"]]
+        )
         tree_str += "\nleft_child=" + " ".join([str(x) for x in tree["left_child"]])
         tree_str += "\nright_child=" + " ".join([str(x) for x in tree["right_child"]])
         tree_str += "\nleaf_value=" + " ".join([str(x) for x in tree["leaf_value"]])
@@ -246,7 +252,9 @@ def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) ->
         tree_str += f"\nis_linear={tree['is_linear']}"
         if is_linear:
             tree_str += "\nleaf_const=" + " ".join(str(x) for x in tree["leaf_const"])
-            tree_str += "\nnum_features=" + " ".join(str(x) for x in tree["num_features"])
+            tree_str += "\nnum_features=" + " ".join(
+                str(x) for x in tree["num_features"]
+            )
             tree_str += "\nleaf_features=" + " ".join(
                 "" if f == -1 else str(int(f)) for f in tree["leaf_features"]
             )
