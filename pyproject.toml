@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "slim-trees"
 description = "A python package for efficient pickling of ML models."
-version = "0.2.4"
+version = "0.2.5"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.8"
@@ -18,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "numpy",
@@ -39,20 +40,8 @@ include = [
     "/slim_trees",
 ]
 
-[tool.black]
-target-version = ["py38"]
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
 [tool.ruff]
-line-length = 100
+line-length = 88
 target-version = "py38"
 
 select = [
@@ -84,7 +73,14 @@ select = [
 ignore = [
     # variable in function should be lowercase
     "N806",
+    # may cause conflicts with ruff formatter
+    "E501",
+    "W191",
 ]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [tool.mypy]
 python_version = "3.8"

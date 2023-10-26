@@ -34,6 +34,7 @@ jobs:
           - { PYTHON_VERSION: '3.9', SKLEARN_VERSION: '', LGBM_VERSION: '' }
           - { PYTHON_VERSION: '3.10', SKLEARN_VERSION: '', LGBM_VERSION: '' }
           - { PYTHON_VERSION: '3.11', SKLEARN_VERSION: '', LGBM_VERSION: '' }
+          - { PYTHON_VERSION: '3.12', SKLEARN_VERSION: '', LGBM_VERSION: '' }
     steps:
       - uses: actions/checkout@v4
       - name: Set up conda env
@@ -57,13 +58,11 @@ jobs:
             ${{ matrix.SKLEARN_VERSION }}${{ matrix.LGBM_VERSION }}
 
   linux-unittests-pixi:
-    name: "Unit tests Pixi - Python ${{ matrix.PYTHON_VERSION }}"
+    name: Unit tests Pixi
     timeout-minutes: 15
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        PYTHON_VERSION: ['3.11']
     steps:
       - uses: actions/checkout@v4
       - uses: prefix-dev/setup-pixi@v0.3.0
@@ -74,7 +73,7 @@ jobs:
         uses: pavelzw/pytest-action@v2
         with:
           custom-pytest: pixi run test
-          report-title: "Unit tests Linux Pixi - Python ${{ matrix.PYTHON_VERSION }}"
+          report-title: Unit tests Linux Pixi
 
   pre-commit:  # todo switch to pre-commit.ci
     name: "Pre-commit checks"

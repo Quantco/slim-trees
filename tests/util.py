@@ -42,10 +42,13 @@ def assert_version_pickle(pickle_function, element):
 
 
 def assert_version_unpickle(pickle_function, element):
-    _unpickle_function, (
-        reconstructor,
-        args,
-        (version, compressed_state),
+    (
+        _unpickle_function,
+        (
+            reconstructor,
+            args,
+            (version, compressed_state),
+        ),
     ) = pickle_function(element)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
