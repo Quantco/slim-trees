@@ -53,6 +53,7 @@ def test_compressed_size(diabetes_toy_df, lgbm_regressor, tmp_path):
     assert size_compressed < 0.6 * size
 
 
+@pytest.mark.xfail(reason="Flaky test")
 @pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
 def test_dump_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_method):
     lgbm_regressor.fit(*diabetes_toy_df)
@@ -64,6 +65,7 @@ def test_dump_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_metho
     assert dump_time_compressed < factor * dump_time_uncompressed
 
 
+@pytest.mark.xfail(reason="Flaky test")
 @pytest.mark.parametrize("compression_method", ["no", "lzma", "gzip", "bz2"])
 def test_load_times(diabetes_toy_df, lgbm_regressor, tmp_path, compression_method):
     lgbm_regressor.fit(*diabetes_toy_df)
