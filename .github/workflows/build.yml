@@ -29,7 +29,7 @@ jobs:
       - uses: Quantco/ui-actions/version-metadata@v1
         id: version-metadata
         with:
-          file: ./pixi.toml
+          file: ./pyproject.toml
           token: ${{ secrets.GITHUB_TOKEN }}
           version-extraction-override: 'regex:version = "(.*)"'
 
