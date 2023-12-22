@@ -4,7 +4,7 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
-  - lightgbm >=3.2,<4.2
+  - lightgbm >=3.2,<4.3
   - numpy
   - python >=3.8
   - pre-commit
