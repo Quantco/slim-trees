@@ -13,7 +13,7 @@ lint = "pre-commit run -a"
 [dependencies]
 python = ">=3.8"
 pip = "*"
-lightgbm = ">=3.2,<4.3"
+lightgbm = ">=3.2,<4.4"
 numpy = "*"
 pre-commit = "*"
 pandas = "*"
