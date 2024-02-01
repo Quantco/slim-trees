@@ -42,6 +42,7 @@ jobs:
       - name: Run unittests
         uses: pavelzw/pytest-action@v2
         with:
+          custom-pytest: pixi run test
           report-title: Unit tests - ${{ matrix.env }}
 
   pre-commit:  # todo switch to pre-commit.ci
