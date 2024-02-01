@@ -118,23 +118,12 @@ You can install the package in development mode using the new conda package mana
 ❯ cd slim-trees
 
 ❯ pixi install
-❯ pixi run pre-commit install
-❯ pixi run pip install --no-deps --disable-pip-version-check --no-build-isolation -e .
-❯ pixi run python
+❯ pixi run --environment py312 postinstall
+❯ pixi run --environment py312 test
+[...]
+❯ pixi run --environment py312 python
 >>> import slim_trees
 [...]
-❯ pixi run test
-[...]
-```
-
-Alternatively, you can use `micromamba` (or `mamba` or `conda`):
-
-```bash
-❯ micromamba create -f environment.yml
-❯ micromamba activate slim_trees
-
-❯ pre-commit install
-❯ pip install --no-build-isolation -e .
 ```
 
 ## Benchmark
