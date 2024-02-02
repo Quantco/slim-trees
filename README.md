@@ -118,10 +118,10 @@ You can install the package in development mode using the new conda package mana
 ❯ cd slim-trees
 
 ❯ pixi install
-❯ pixi run --environment py312 postinstall
-❯ pixi run --environment py312 test
+❯ pixi run postinstall
+❯ pixi run test
 [...]
-❯ pixi run --environment py312 python
+❯ pixi run py312 python
 >>> import slim_trees
 [...]
 ```
