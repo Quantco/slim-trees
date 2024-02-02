@@ -61,6 +61,7 @@ pre-commit = "*"
 lint = "pre-commit run -a"
 
 [environments]
+default = ["test"]
 skl11 = ["py38", "skl11", "test"]
 skl12 = ["py38", "skl12", "test"]
 skl13 = ["py38", "skl13", "test"]
@@ -75,3 +76,4 @@ py39 = ["py39", "test"]
 py310 = ["py310", "test"]
 py311 = ["py311", "test"]
 py312 = ["py312", "test"]
+lint = ["lint"]
