@@ -7,7 +7,7 @@ name = "slim-trees"
 description = "A python package for efficient pickling of ML models."
 version = "0.2.7"
 readme = "README.md"
-license = "MIT"
+license = {file = "LICENSE"}
 requires-python = ">=3.8"
 authors = [
     { name = "Pavel Zwerschke", email = "pavel.zwerschke@quantco.com" },
@@ -44,6 +44,7 @@ include = [
 line-length = 88
 target-version = "py38"
 
+[tool.ruff.lint]
 select = [
     # pyflakes
     "F",
