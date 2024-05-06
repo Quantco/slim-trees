@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "slim-trees"
 description = "A python package for efficient pickling of ML models."
-version = "0.2.7"
+version = "0.2.8"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
@@ -29,7 +29,7 @@ lightgbm = [
     "lightgbm >=3.2,<4.4",
 ]
 scikit-learn = [
-    "scikit-learn >=1.1.0,<1.4",
+    "scikit-learn >=1.1.0,<1.5",
 ]
 
 [project.urls]
