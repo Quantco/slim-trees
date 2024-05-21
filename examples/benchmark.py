@@ -8,15 +8,16 @@ from typing import Any, Callable, List
 import lightgbm as lgb
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
-from examples.utils import generate_dataset
 from slim_trees import dumps_lgbm_compressed, dumps_sklearn_compressed
 from slim_trees.pickling import dumps_compressed, get_pickled_size, loads_compressed
 
-MODELS_PATH = "examples/benchmark_models"
+from .utils import generate_dataset
+
+MODELS_PATH = Path("examples/benchmark_models")
 
 
 def load_model(model_name: str, generate: Callable) -> Any:
-    model_path = Path(f"{MODELS_PATH}/{model_name}.pkl")
+    model_path = Path(MODELS_PATH / f"{model_name}.pkl")
 
     if model_path.exists():
         print(f"Loading model `{model_name}.pkl` from disk...")

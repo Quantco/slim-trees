@@ -24,9 +24,10 @@ except ImportError:
 
 import copyreg
 import pickle
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, Dict
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 def dump(model: Any, file: BinaryIO):
@@ -42,7 +43,7 @@ def dumps(model: Any) -> bytes:
     return bytes_io.getvalue()
 
 
-def _tree_pickle(tree):
+def _tree_pickle(tree: Tree):
     assert isinstance(tree, Tree)
     reconstructor, args, state = tree.__reduce__()
     compressed_state = _compress_tree_state(state)
@@ -59,7 +60,7 @@ def _tree_unpickle(reconstructor, args, compressed_state):
     return tree
 
 
-def _compress_tree_state(state: dict):
+def _compress_tree_state(state: Dict) -> Dict:
     """
     Compresses a Tree state.
     :param state: dictionary with 'max_depth', 'node_count', 'nodes', 'values' as keys.
@@ -119,7 +120,7 @@ def _compress_tree_state(state: dict):
     }
 
 
-def _decompress_tree_state(state: dict):
+def _decompress_tree_state(state: Dict) -> Dict:
     """
     Decompresses a Tree state.
     :param state: 'children_left', 'children_right', 'features', 'thresholds', 'values' as keys.
@@ -148,13 +149,13 @@ def _decompress_tree_state(state: dict):
         )
     n_nodes = state["node_count"]
 
-    children_left = np.zeros(n_nodes, dtype=np.int64)
-    children_right = np.zeros(n_nodes, dtype=np.int64)
-    features = np.zeros(n_nodes, dtype=np.int64)
-    thresholds = np.zeros(n_nodes, dtype=np.float64)
+    children_left: NDArray = np.zeros(n_nodes, dtype=np.int64)
+    children_right: NDArray = np.zeros(n_nodes, dtype=np.int64)
+    features: NDArray = np.zeros(n_nodes, dtype=np.int64)
+    thresholds: NDArray = np.zeros(n_nodes, dtype=np.float64)
     # same shape as values but with all nodes instead of only the leaves
-    values = np.zeros((n_nodes, *state["values"].shape[1:]), dtype=np.float64)
-    missing_go_to_left = np.zeros(n_nodes, dtype="uint8")
+    values: NDArray = np.zeros((n_nodes, *state["values"].shape[1:]), dtype=np.float64)
+    missing_go_to_left: NDArray = np.zeros(n_nodes, dtype="uint8")
 
     is_leaf = np.unpackbits(state["is_leaf"], count=n_nodes).astype("bool")
     children_left[~is_leaf] = state["children_left"]

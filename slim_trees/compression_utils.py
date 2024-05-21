@@ -1,13 +1,16 @@
+from typing import Dict
+
 import numpy as np
+from numpy.typing import DTypeLike, NDArray
 
 
-def safe_cast(arr: np.array, dtype):
+def safe_cast(arr: NDArray, dtype: DTypeLike) -> NDArray:
     if np.can_cast(arr.max(), dtype) and np.can_cast(arr.min(), dtype):
         return arr.astype(dtype)
     raise ValueError(f"Cannot cast array to {dtype}.")
 
 
-def _is_in_neighborhood_of_int(arr, iinfo, eps=1e-12):
+def _is_in_neighborhood_of_int(arr: NDArray, iinfo: np.iinfo, eps: float = 1e-12):
     """
     Checks if the numbers are around an integer.
     np.abs(arr % 1 - 1) < eps checks if the number is in an epsilon neighborhood on the right side
@@ -21,7 +24,9 @@ def _is_in_neighborhood_of_int(arr, iinfo, eps=1e-12):
     )
 
 
-def compress_half_int_float_array(a, compression_dtype="int8"):
+def compress_half_int_float_array(
+    a: NDArray, compression_dtype: DTypeLike = "int8"
+) -> Dict:
     """Compress small integer and half-integer floats in a lossless fashion
 
     Idea:
@@ -48,7 +53,7 @@ def compress_half_int_float_array(a, compression_dtype="int8"):
     return state
 
 
-def decompress_half_int_float_array(state):
+def decompress_half_int_float_array(state: Dict) -> NDArray:
     n_thresholds = len(state["a2_compressible"]) + len(state["a_incompressible"])
     is_compressible = np.unpackbits(
         state["is_compressible"], count=n_thresholds

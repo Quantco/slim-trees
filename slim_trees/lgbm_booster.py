@@ -4,9 +4,10 @@ import os
 import pickle
 import re
 import sys
-from typing import Any, BinaryIO, List, Tuple
+from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from numpy.typing import DTypeLike, NDArray
 from packaging.version import Version
 
 from slim_trees import __version__ as slim_trees_version
@@ -42,7 +43,7 @@ def dumps(model: Any) -> bytes:
 
 def _booster_pickle(booster: Booster):
     assert isinstance(booster, Booster)
-    reconstructor, args, state = booster.__reduce__()
+    reconstructor, args, state = booster.__reduce__()  # type: ignore
     compressed_state = _compress_booster_state(state)
     return _booster_unpickle, (
         reconstructor,
@@ -125,9 +126,9 @@ def _validate_feature_lengths(feats_map: dict):
     assert len(feats_map["leaf_value"]) == num_leaves
 
 
-def parse(str_list, dtype):
+def parse(str_list: Union[List[str], List[Optional[str]]], dtype: DTypeLike):
     if np.can_cast(dtype, np.int64):
-        int64_array = np.array(str_list, dtype=np.int64)
+        int64_array: NDArray = np.array(str_list, dtype=np.int64)
         return safe_cast(int64_array, dtype)
     assert np.can_cast(dtype, np.float64)
     return np.array(str_list, dtype=dtype)
@@ -159,8 +160,8 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
         assert int(tree_idx) == i
 
         # extract features -- filter out empty ones
-        features = [f for f in features_list.split("\n") if "=" in f]
-        feats_map = dict(_extract_feature(fl) for fl in features)
+        features: List[str] = [f for f in features_list.split("\n") if "=" in f]
+        feats_map: Dict[str, List[str]] = dict(_extract_feature(fl) for fl in features)
         _validate_feature_lengths(feats_map)
 
         tree_values = {
@@ -185,7 +186,7 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
             tree_values["num_features"] = parse(feats_map["num_features"], np.int32)
             tree_values["leaf_const"] = parse(feats_map["leaf_const"], LEAF_VALUE_DTYPE)
             tree_values["leaf_features"] = parse(
-                [s if s else -1 for s in feats_map["leaf_features"]],
+                [s if s else "-1" for s in feats_map["leaf_features"]],
                 np.int16,
             )
             tree_values["leaf_coeff"] = parse(

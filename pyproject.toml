@@ -85,6 +85,10 @@ indent-style = "space"
 
 [tool.mypy]
 python_version = "3.8"
-ignore_missing_imports = true
 no_implicit_optional = true
 check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+# https://github.com/scikit-learn/scikit-learn/issues/16705
+module = "sklearn.*"
+ignore_missing_imports = true

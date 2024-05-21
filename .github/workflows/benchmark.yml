@@ -23,10 +23,10 @@ jobs:
           cache-name: benchmark-model-cache
         with:
           path: examples/benchmark_models
-          key: models-${{ hashFiles('benchmark.py', '.github/workflows/benchmark.yml') }}
+          key: models-${{ hashFiles('examples/benchmark.py', '.github/workflows/benchmark.yml') }}
       - name: Run benchmark
         run: |
-          python benchmark.py
+          python examples/benchmark.py
           echo "_(benchmark **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_" >> result.md
           cat benchmark.md >> result.md
         shell: pixi run bash {0}

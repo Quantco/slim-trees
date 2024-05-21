@@ -23,6 +23,7 @@ pytest-md = "*"
 pytest-emoji = "*"
 pandas = "*"
 mypy = "*"
+pandas-stubs = "*"
 [feature.test.tasks]
 test = "pytest"
 
