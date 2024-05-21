@@ -2,16 +2,15 @@ import pathlib
 import tempfile
 
 from sklearn.ensemble import RandomForestRegressor
-
-from slim_trees import dump_sklearn_compressed
-from slim_trees.pickling import load_compressed
-from slim_trees.sklearn_tree import dump
-
-from .utils import (
+from utils import (
     evaluate_compression_performance,
     evaluate_prediction_difference,
     generate_dataset,
 )
+
+from slim_trees import dump_sklearn_compressed
+from slim_trees.pickling import load_compressed
+from slim_trees.sklearn_tree import dump
 
 
 def train_model() -> RandomForestRegressor:

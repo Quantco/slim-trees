@@ -29,7 +29,7 @@ jobs:
           python examples/benchmark.py
           echo "_(benchmark **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_" >> result.md
           cat benchmark.md >> result.md
-        shell: pixi run bash {0}
+        shell: pixi run bash -e {0}
       - name: Comment on PR
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'

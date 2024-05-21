@@ -7,11 +7,10 @@ from typing import Any, Callable, List
 
 import lightgbm as lgb
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from utils import generate_dataset
 
 from slim_trees import dumps_lgbm_compressed, dumps_sklearn_compressed
 from slim_trees.pickling import dumps_compressed, get_pickled_size, loads_compressed
-
-from .utils import generate_dataset
 
 MODELS_PATH = Path("examples/benchmark_models")
 
