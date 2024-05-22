@@ -87,8 +87,9 @@ indent-style = "space"
 python_version = "3.8"
 no_implicit_optional = true
 check_untyped_defs = true
+scripts_are_modules = true
 
 [[tool.mypy.overrides]]
 # https://github.com/scikit-learn/scikit-learn/issues/16705
-module = "sklearn.*"
+module = ["sklearn.*"]
 ignore_missing_imports = true

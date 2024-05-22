@@ -2,12 +2,12 @@ import pathlib
 import tempfile
 
 from sklearn.ensemble import RandomForestRegressor
-from utils import (
+
+from examples.utils import (
     evaluate_compression_performance,
     evaluate_prediction_difference,
     generate_dataset,
 )
-
 from slim_trees import dump_sklearn_compressed
 from slim_trees.pickling import load_compressed
 from slim_trees.sklearn_tree import dump
