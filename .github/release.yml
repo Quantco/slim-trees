@@ -20,4 +20,4 @@ changelog:
         - ci
     - title: 🤷🏻 Other changes
       labels:
-        - '*'
+        - "*"

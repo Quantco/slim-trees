@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "slim-trees"
 description = "A python package for efficient pickling of ML models."
-version = "0.2.8"
+version = "0.2.9"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
@@ -85,6 +85,10 @@ indent-style = "space"
 
 [tool.mypy]
 python_version = "3.8"
-ignore_missing_imports = true
 no_implicit_optional = true
 check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+# https://github.com/scikit-learn/scikit-learn/issues/16705
+module = ["sklearn.*"]
+ignore_missing_imports = true

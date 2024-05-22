@@ -4,12 +4,12 @@ from typing import Union
 
 import lightgbm as lgb
 from lightgbm import Booster
-from utils import (
+
+from examples.utils import (
     evaluate_compression_performance,
     evaluate_prediction_difference,
     generate_dataset,
 )
-
 from slim_trees import dump_lgbm_compressed
 from slim_trees.lgbm_booster import dump
 from slim_trees.pickling import load_compressed
