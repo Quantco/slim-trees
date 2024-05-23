@@ -29,7 +29,7 @@ lightgbm = [
     "lightgbm >=3.2,<4.4",
 ]
 scikit-learn = [
-    "scikit-learn >=1.1.0,<1.5",
+    "scikit-learn >=1.1.0,<1.6",
 ]
 
 [project.urls]

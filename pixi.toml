@@ -17,7 +17,7 @@ hatchling = "*"
 
 [feature.test.dependencies]
 lightgbm = ">=3.2,<4.4"
-scikit-learn = ">=1.1,<1.5"
+scikit-learn = ">=1.1,<1.6"
 pytest = ">=7.0"
 pytest-md = "*"
 pytest-emoji = "*"
@@ -47,6 +47,8 @@ scikit-learn = ">=1.2,<1.3"
 scikit-learn = ">=1.3,<1.4"
 [feature.skl14.dependencies]
 scikit-learn = ">=1.4,<1.5"
+[feature.skl15.dependencies]
+scikit-learn = ">=1.5,<1.6"
 [feature.py38.dependencies]
 python = ">=3.8,<3.9"
 [feature.py39.dependencies]
@@ -73,6 +75,7 @@ skl11 = ["py38", "skl11", "test"]
 skl12 = ["py38", "skl12", "test"]
 skl13 = ["py38", "skl13", "test"]
 skl14 = ["py39", "skl14", "test"]
+skl15 = ["py39", "skl15", "test"]
 lgbm32 = ["py38", "lgbm32", "test"]
 lgbm33 = ["py38", "lgbm33", "test"]
 lgbm40 = ["py38", "lgbm40", "test"]
