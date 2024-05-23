@@ -21,6 +21,7 @@ jobs:
           - skl12
           - skl13
           - skl14
+          - skl15
           - lgbm32
           - lgbm33
           - lgbm40
