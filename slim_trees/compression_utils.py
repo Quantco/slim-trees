@@ -23,7 +23,7 @@ def can_cast(value: Any, dtype: DTypeLike) -> bool:
 
     return np.can_cast(scalar_type, dtype) or (
         scalar_type.kind == "u"
-        and np.issubdtype(dtype, np.integer)
+        and np.issubdtype(dtype, np.signedinteger)
         and value <= np.iinfo(dtype).max
     )
 
