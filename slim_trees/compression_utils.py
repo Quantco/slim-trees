@@ -1,13 +1,35 @@
-from typing import Dict
+from typing import Any, Dict
 
 import numpy as np
 from numpy.typing import DTypeLike, NDArray
 
+NP_2 = np.__version__ >= "2.0.0"
+
+
+def can_cast(value: Any, dtype: DTypeLike) -> bool:
+    """
+    Check if the given value can be cast to the specified data type.
+
+    Notes:
+        In numpy 2.0.0, np.can_cast does not support Python scalars anymore and does not apply
+          any value-based logic for 0-D arrays and NumPy scalars.
+        If value is a uint and dtype is an int of the same size, check if value <= np.iinfo(dtype).max
+    """
+
+    if not NP_2:
+        return np.can_cast(value, dtype)
+
+    scalar_type = np.min_scalar_type(value)
+
+    return np.can_cast(scalar_type, dtype) or (
+        scalar_type.kind == "u" and value <= np.iinfo(dtype).max
+    )
+
 
 def safe_cast(arr: NDArray, dtype: DTypeLike) -> NDArray:
-    if np.can_cast(arr.max(), dtype) and np.can_cast(arr.min(), dtype):
+    if can_cast(arr.max(), dtype) and can_cast(arr.min(), dtype):
         return arr.astype(dtype)
-    raise ValueError(f"Cannot cast array to {dtype}.")
+    raise ValueError(f"Cannot cast {arr.max().dtype} and {arr.min().dtype} to {dtype}.")
 
 
 def _is_in_neighborhood_of_int(arr: NDArray, iinfo: np.iinfo, eps: float = 1e-12):
