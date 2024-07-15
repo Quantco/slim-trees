@@ -9,7 +9,7 @@ postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-
 
 [dependencies]
 python = ">=3.8"
-numpy = "*"
+numpy = ">=1,<3"
 
 [host-dependencies]
 pip = "*"
@@ -49,6 +49,10 @@ scikit-learn = ">=1.3,<1.4"
 scikit-learn = ">=1.4,<1.5"
 [feature.skl15.dependencies]
 scikit-learn = ">=1.5,<1.6"
+[feature.np1.dependencies]
+numpy = "1.*"
+[feature.np2.dependencies]
+numpy = "2.*"
 [feature.py38.dependencies]
 python = ">=3.8,<3.9"
 [feature.py39.dependencies]
@@ -71,20 +75,20 @@ pre-commit-run = "pre-commit run -a"
 
 [environments]
 default = ["test"]
-skl11 = ["py38", "skl11", "test"]
-skl12 = ["py38", "skl12", "test"]
-skl13 = ["py38", "skl13", "test"]
-skl14 = ["py39", "skl14", "test"]
-skl15 = ["py39", "skl15", "test"]
-lgbm32 = ["py38", "lgbm32", "test"]
-lgbm33 = ["py38", "lgbm33", "test"]
-lgbm40 = ["py38", "lgbm40", "test"]
-lgbm41 = ["py38", "lgbm41", "test"]
-lgbm42 = ["py38", "lgbm42", "test"]
-lgbm43 = ["py38", "lgbm43", "test"]
-py38 = ["py38", "test"]
-py39 = ["py39", "test"]
-py310 = ["py310", "test"]
-py311 = ["py311", "test"]
-py312 = ["py312", "test"]
+skl11 = ["py38", "skl11", "test", "np1"]
+skl12 = ["py38", "skl12", "test", "np1"]
+skl13 = ["py38", "skl13", "test", "np1"]
+skl14 = ["py39", "skl14", "test", "np1"]
+skl15 = ["py39", "skl15", "test", "np2"]
+lgbm32 = ["py38", "lgbm32", "test", "np1"]
+lgbm33 = ["py38", "lgbm33", "test", "np1"]
+lgbm40 = ["py38", "lgbm40", "test", "np1"]
+lgbm41 = ["py38", "lgbm41", "test", "np1"]
+lgbm42 = ["py38", "lgbm42", "test", "np1"]
+lgbm43 = ["py38", "lgbm43", "test", "np1"]
+py38 = ["py38", "test", "np1"]
+py39 = ["py39", "test", "np1"]
+py310 = ["py310", "test", "np1"]
+py311 = ["py311", "test", "np1"]
+py312 = ["py312", "test", "np2"]
 lint = { features = ["lint"], no-default-feature = true }
