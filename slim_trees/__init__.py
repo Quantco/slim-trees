@@ -42,7 +42,9 @@ __all__ = [
 
 
 def dump_sklearn_compressed(
-    model: Any, file: Union[str, Path, BinaryIO], compression: Optional[Union[str, dict]] = None
+    model: Any,
+    file: Union[str, Path, BinaryIO],
+    compression: Optional[Union[str, dict]] = None,
 ):
     """
     Pickles a model and saves a compressed version to the disk.
@@ -79,7 +81,9 @@ def dumps_sklearn_compressed(
 
 
 def dump_lgbm_compressed(
-    model: Any, file: Union[str, Path, BinaryIO], compression: Optional[Union[str, dict]] = None
+    model: Any,
+    file: Union[str, Path, BinaryIO],
+    compression: Optional[Union[str, dict]] = None,
 ):
     """
     Pickles a model and saves a compressed version to the disk.

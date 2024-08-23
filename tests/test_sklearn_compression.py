@@ -167,13 +167,11 @@ def test_dump_and_load_from_file(tmp_path, random_forest_regressor):
         load_compressed(file, compression="lzma")
 
     # No compression method specified
-    with pytest.raises(ValueError), (tmp_path / "model.pickle.lzma").open(
-        "rb"
-    ) as file:
+    with pytest.raises(ValueError), (tmp_path / "model.pickle.lzma").open("rb") as file:
         load_compressed(file)
 
-    with pytest.raises(ValueError), (tmp_path / "model.pickle.lzma").open(
-        "wb"
-    ) as file:
+    with pytest.raises(ValueError), (tmp_path / "model.pickle.lzma").open("wb") as file:
         dump_sklearn_compressed(random_forest_regressor, file)
+
+
 # todo add tests for large models
