@@ -46,7 +46,7 @@ def dumps(model: Any) -> bytes:
 def _tree_pickle(tree: Tree):
     assert isinstance(tree, Tree)
     reconstructor, args, state = tree.__reduce__()
-    compressed_state = _compress_tree_state(state)
+    compressed_state = _compress_tree_state(state)  # type: ignore
     return _tree_unpickle, (reconstructor, args, (slim_trees_version, compressed_state))
 
 
@@ -113,7 +113,7 @@ def _compress_tree_state(state: Dict) -> Dict:
             "values": values,
         },
         **(
-            {"missing_go_to_left": np.packbits(missing_go_to_left)}
+            {"missing_go_to_left": np.packbits(missing_go_to_left)}  # type: ignore
             if sklearn_version_ge_130
             else {}
         ),

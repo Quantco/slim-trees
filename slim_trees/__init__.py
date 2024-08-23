@@ -13,7 +13,7 @@ pickling module.
 import importlib.metadata
 import warnings
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, BinaryIO, Optional, Union
 
 from slim_trees.pickling import (
     dump_compressed,
@@ -42,14 +42,16 @@ __all__ = [
 
 
 def dump_sklearn_compressed(
-    model: Any, path: Union[str, Path], compression: Optional[Union[str, dict]] = None
+    model: Any,
+    file: Union[str, Path, BinaryIO],
+    compression: Optional[Union[str, dict]] = None,
 ):
     """
     Pickles a model and saves a compressed version to the disk.
 
     Saves the parameters of the model as int16 and float32 instead of int64 and float64.
     :param model: the model to save
-    :param path: where to save the model
+    :param file: where to save the model, either a path or a file object
     :param compression: the compression method used. Either a string or a dict with key 'method' set
                         to the compression method and other key-value pairs are forwarded to `open`
                         of the compression library.
@@ -57,7 +59,7 @@ def dump_sklearn_compressed(
     """
     from slim_trees.sklearn_tree import dump
 
-    dump_compressed(model, path, compression, dump)
+    dump_compressed(model, file, compression, dump)
 
 
 def dumps_sklearn_compressed(
@@ -79,14 +81,16 @@ def dumps_sklearn_compressed(
 
 
 def dump_lgbm_compressed(
-    model: Any, path: Union[str, Path], compression: Optional[Union[str, dict]] = None
+    model: Any,
+    file: Union[str, Path, BinaryIO],
+    compression: Optional[Union[str, dict]] = None,
 ):
     """
     Pickles a model and saves a compressed version to the disk.
 
     Saves the parameters of the model as int16 and float32 instead of int64 and float64.
     :param model: the model to save
-    :param path: where to save the model
+    :param file: where to save the model, either a path or a file object
     :param compression: the compression method used. Either a string or a dict with key 'method' set
                         to the compression method and other key-value pairs are forwarded to `open`
                         of the compression library.
@@ -94,7 +98,7 @@ def dump_lgbm_compressed(
     """
     from slim_trees.lgbm_booster import dump
 
-    dump_compressed(model, path, compression, dump)
+    dump_compressed(model, file, compression, dump)
 
 
 def dumps_lgbm_compressed(

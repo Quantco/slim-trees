@@ -5,7 +5,7 @@ import lzma
 import pathlib
 import pickle
 from collections.abc import Callable
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, BinaryIO, Dict, Optional, Tuple, Union
 
 
 class _NoCompression:
@@ -51,7 +51,7 @@ def _get_default_kwargs(compression_method: str) -> Dict[str, Any]:
 
 def _unpack_compression_args(
     compression: Optional[Union[str, Dict[str, Any]]] = None,
-    path: Optional[Union[str, pathlib.Path]] = None,
+    file: Optional[Union[str, pathlib.Path, BinaryIO]] = None,
 ) -> Tuple[str, dict]:
     if compression is not None:
         if isinstance(compression, str):
@@ -61,16 +61,16 @@ def _unpack_compression_args(
                 k: compression[k] for k in compression if k != "method"
             }
         raise ValueError("compression must be either a string or a dict")
-    if path is not None:
+    if file is not None and isinstance(file, (str, pathlib.Path)):
         # try to find out the compression using the file extension
-        compression_method = _get_compression_from_path(path)
+        compression_method = _get_compression_from_path(file)
         return compression_method, _get_default_kwargs(compression_method)
-    raise ValueError("path or compression must not be None.")
+    raise ValueError("File must be a path or compression must not be None.")
 
 
 def dump_compressed(
     obj: Any,
-    path: Union[str, pathlib.Path],
+    file: Union[str, pathlib.Path, BinaryIO],
     compression: Optional[Union[str, dict]] = None,
     dump_function: Optional[Callable] = None,
 ):
@@ -78,7 +78,7 @@ def dump_compressed(
     Pickles a model and saves it to the disk. If compression is not specified,
     the compression method will be determined by the file extension.
     :param obj: the object to pickle
-    :param path: where to save the object
+    :param file: where to save the object, either a path or a file object
     :param compression: the compression method used. Either a string or a dict with key 'method' set
                         to the compression method and other key-value pairs are forwarded to open()
                         of the compression library.
@@ -89,11 +89,11 @@ def dump_compressed(
     if dump_function is None:
         dump_function = pickle.dump
 
-    compression_method, kwargs = _unpack_compression_args(compression, path)
+    compression_method, kwargs = _unpack_compression_args(compression, file)
     with _get_compression_library(compression_method).open(
-        path, mode="wb", **kwargs
-    ) as file:
-        dump_function(obj, file)
+        file, mode="wb", **kwargs
+    ) as fd:
+        dump_function(obj, fd)
 
 
 def dumps_compressed(
@@ -124,13 +124,13 @@ def dumps_compressed(
 
 
 def load_compressed(
-    path: Union[str, pathlib.Path],
+    file: Union[str, pathlib.Path, BinaryIO],
     compression: Optional[Union[str, dict]] = None,
     unpickler_class: type = pickle.Unpickler,
 ) -> Any:
     """
     Loads a compressed model.
-    :param path: where to load the object from
+    :param file: where to load the object from, either a path or a file object
     :param compression: the compression method used. Either a string or a dict with key 'method'
                         set to the compression method and other key-value pairs which are forwarded
                         to open() of the compression library.
@@ -139,11 +139,11 @@ def load_compressed(
                             This is useful to restrict possible imports or to allow unpickling
                             when required module or function names have been refactored.
     """
-    compression_method, kwargs = _unpack_compression_args(compression, path)
+    compression_method, kwargs = _unpack_compression_args(compression, file)
     with _get_compression_library(compression_method).open(
-        path, mode="rb", **kwargs
-    ) as file:
-        return unpickler_class(file).load()
+        file, mode="rb", **kwargs
+    ) as fd:
+        return unpickler_class(fd).load()
 
 
 def loads_compressed(
