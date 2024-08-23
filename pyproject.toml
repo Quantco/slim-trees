@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "slim-trees"
 description = "A python package for efficient pickling of ML models."
-version = "0.2.11"
+version = "0.2.12"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
