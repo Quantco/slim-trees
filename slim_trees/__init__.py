@@ -75,7 +75,7 @@ def dump_sklearn_compressed(
     """
     from slim_trees.sklearn_tree import dump
 
-    dump_compressed(model, file, compression, dump) # type: ignore
+    dump_compressed(model, file, compression, dump)  # type: ignore
 
 
 def dumps_sklearn_compressed(

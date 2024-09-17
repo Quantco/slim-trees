@@ -67,14 +67,15 @@ def _unpack_compression_args(
         return compression_method, _get_default_kwargs(compression_method)
     raise ValueError("File must be a path or compression must not be None.")
 
+
 @overload
 def dump_compressed(
     obj: Any,
     file: BinaryIO,
     compression: Union[str, dict],
     dump_function: Optional[Callable] = None,
-):
-    ...
+): ...
+
 
 @overload
 def dump_compressed(
@@ -82,8 +83,8 @@ def dump_compressed(
     file: Union[str, pathlib.Path],
     compression: Optional[Union[str, dict]] = None,
     dump_function: Optional[Callable] = None,
-):
-    ...
+): ...
+
 
 def dump_compressed(
     obj: Any,
@@ -145,16 +146,16 @@ def load_compressed(
     file: BinaryIO,
     compression: Union[str, dict],
     unpickler_class: type = pickle.Unpickler,
-):
-    ...
+): ...
+
 
 @overload
 def load_compressed(
     file: Union[str, pathlib.Path],
     compression: Optional[Union[str, dict]] = None,
     unpickler_class: type = pickle.Unpickler,
-):
-    ...
+): ...
+
 
 def load_compressed(
     file: Union[str, pathlib.Path, BinaryIO],
