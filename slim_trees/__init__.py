@@ -13,7 +13,7 @@ pickling module.
 import importlib.metadata
 import warnings
 from pathlib import Path
-from typing import Any, BinaryIO, Optional, Union
+from typing import Any, BinaryIO, Optional, Union, overload
 
 from slim_trees.pickling import (
     dump_compressed,
@@ -41,6 +41,22 @@ __all__ = [
 ]
 
 
+@overload
+def dump_sklearn_compressed(
+    model: Any,
+    file: BinaryIO,
+    compression: Union[str, dict],
+): ...
+
+
+@overload
+def dump_sklearn_compressed(
+    model: Any,
+    file: Union[str, Path],
+    compression: Optional[Union[str, dict]] = None,
+): ...
+
+
 def dump_sklearn_compressed(
     model: Any,
     file: Union[str, Path, BinaryIO],
@@ -59,7 +75,7 @@ def dump_sklearn_compressed(
     """
     from slim_trees.sklearn_tree import dump
 
-    dump_compressed(model, file, compression, dump)
+    dump_compressed(model, file, compression, dump)  # type: ignore
 
 
 def dumps_sklearn_compressed(
@@ -80,6 +96,22 @@ def dumps_sklearn_compressed(
     return dumps_compressed(model, compression, dumps)
 
 
+@overload
+def dump_lgbm_compressed(
+    model: Any,
+    file: BinaryIO,
+    compression: Union[str, dict],
+): ...
+
+
+@overload
+def dump_lgbm_compressed(
+    model: Any,
+    file: Union[str, Path],
+    compression: Optional[Union[str, dict]] = None,
+): ...
+
+
 def dump_lgbm_compressed(
     model: Any,
     file: Union[str, Path, BinaryIO],
@@ -98,7 +130,7 @@ def dump_lgbm_compressed(
     """
     from slim_trees.lgbm_booster import dump
 
-    dump_compressed(model, file, compression, dump)
+    dump_compressed(model, file, compression, dump)  # type: ignore
 
 
 def dumps_lgbm_compressed(
