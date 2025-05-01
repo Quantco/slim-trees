@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.8.3
+        uses: prefix-dev/setup-pixi@v0.8.8
         with:
           environments: ${{ matrix.env }}
       - name: Install repository
@@ -55,7 +55,7 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v4
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.8.3
+        uses: prefix-dev/setup-pixi@v0.8.8
       - uses: quantco/pre-commit-conda@v1
         with:
           python-version: "3.8"
