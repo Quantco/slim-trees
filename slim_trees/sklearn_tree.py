@@ -69,10 +69,14 @@ def _compress_tree_state(state: Dict) -> Dict:
     assert isinstance(state, dict)
     assert state.keys() == {"max_depth", "node_count", "nodes", "values"}
     nodes = state["nodes"]
+    node_count = state["node_count"]
+
     # nodes is a numpy array of tuples of the following form
     # (left_child, right_child, feature, threshold, impurity, n_node_samples,
     #  weighted_n_node_samples)
-    dtype_child = np.uint16
+    dtype_child = (
+        np.uint16 if node_count <= np.iinfo(np.uint16).max else np.uint32
+    )  # use bigger dtype if tree has more than 65535 leaf nodes
     dtype_feature = np.uint16
     dtype_threshold = np.float64
     dtype_value = np.float32
