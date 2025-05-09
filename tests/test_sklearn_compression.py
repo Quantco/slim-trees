@@ -174,4 +174,20 @@ def test_dump_and_load_from_file(tmp_path, random_forest_regressor):
         dump_sklearn_compressed(random_forest_regressor, file)
 
 
+def test_too_many_leaves_for_unit16(tmp_path):
+    x = np.arange(70_000).reshape(-1, 1)
+    y = np.arange(70_000)
+
+    # model = RandomForestRegressor(max_depth=1, n_estimators=70_000)
+    model = DecisionTreeRegressor(random_state=42)
+    model.fit(x, y)
+
+    dump_sklearn_compressed(model, tmp_path / "model.pickle.lzma")
+
+    with (tmp_path / "model.pickle.lzma").open("rb") as file:
+        model_loaded = load_compressed(file, compression="lzma")
+
+    assert model.predict([[1234]]) == model_loaded.predict([[1234]])
+
+
 # todo add tests for large models

@@ -92,3 +92,6 @@ py310 = ["py310", "test", "np1"]
 py311 = ["py311", "test", "np1"]
 py312 = ["py312", "test", "np2"]
 lint = { features = ["lint"], no-default-feature = true }
+
+[target.osx-arm64.dependencies]
+libgfortran5 = ">=14" # https://github.com/prefix-dev/pixi/issues/3479
