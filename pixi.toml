@@ -16,7 +16,7 @@ pip = "*"
 hatchling = "*"
 
 [feature.test.dependencies]
-lightgbm = ">=3.2,<4.4"
+lightgbm = ">=3.2,<4.7"
 scikit-learn = ">=1.1,<1.6"
 pytest = ">=7.0"
 pytest-md = "*"
@@ -39,6 +39,8 @@ lightgbm = ">=4.1,<4.2"
 lightgbm = ">=4.2,<4.3"
 [feature.lgbm43.dependencies]
 lightgbm = ">=4.3,<4.4"
+[feature.lgbm46.dependencies]
+lightgbm = ">=4.6,<4.7"
 [feature.skl11.dependencies]
 scikit-learn = ">=1.1,<1.2"
 [feature.skl12.dependencies]
@@ -86,6 +88,7 @@ lgbm40 = ["py38", "lgbm40", "test", "np1"]
 lgbm41 = ["py38", "lgbm41", "test", "np1"]
 lgbm42 = ["py38", "lgbm42", "test", "np1"]
 lgbm43 = ["py38", "lgbm43", "test", "np1"]
+lgbm46 = ["py310", "lgbm46", "test", "np1"]
 py38 = ["py38", "test", "np1"]
 py39 = ["py39", "test", "np1"]
 py310 = ["py310", "test", "np1"]
