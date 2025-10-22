@@ -3,7 +3,7 @@ import tempfile
 import time
 from collections.abc import Callable
 from itertools import product
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd

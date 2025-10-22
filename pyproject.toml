@@ -69,6 +69,7 @@ ignore = [
   # may cause conflicts with ruff formatter
   "E501",
   "W191",
+  "PLC0415",
 ]
 
 [tool.ruff.format]

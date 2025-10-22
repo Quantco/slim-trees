@@ -13,7 +13,7 @@ pickling module.
 import importlib.metadata
 import warnings
 from pathlib import Path
-from typing import Any, BinaryIO, Optional, Union, overload
+from typing import Any, BinaryIO, overload
 
 from slim_trees.pickling import (
     dump_compressed,
