@@ -45,22 +45,22 @@ __all__ = [
 def dump_sklearn_compressed(
     model: Any,
     file: BinaryIO,
-    compression: Union[str, dict],
+    compression: str | dict,
 ): ...
 
 
 @overload
 def dump_sklearn_compressed(
     model: Any,
-    file: Union[str, Path],
-    compression: Optional[Union[str, dict]] = None,
+    file: str | Path,
+    compression: str | dict | None = None,
 ): ...
 
 
 def dump_sklearn_compressed(
     model: Any,
-    file: Union[str, Path, BinaryIO],
-    compression: Optional[Union[str, dict]] = None,
+    file: str | Path | BinaryIO,
+    compression: str | dict | None = None,
 ):
     """
     Pickles a model and saves a compressed version to the disk.
@@ -79,7 +79,7 @@ def dump_sklearn_compressed(
 
 
 def dumps_sklearn_compressed(
-    model: Any, compression: Optional[Union[str, dict]] = None
+    model: Any, compression: str | dict | None = None
 ) -> bytes:
     """
     Pickles a model and returns the saved object as bytes.
@@ -100,22 +100,22 @@ def dumps_sklearn_compressed(
 def dump_lgbm_compressed(
     model: Any,
     file: BinaryIO,
-    compression: Union[str, dict],
+    compression: str | dict,
 ): ...
 
 
 @overload
 def dump_lgbm_compressed(
     model: Any,
-    file: Union[str, Path],
-    compression: Optional[Union[str, dict]] = None,
+    file: str | Path,
+    compression: str | dict | None = None,
 ): ...
 
 
 def dump_lgbm_compressed(
     model: Any,
-    file: Union[str, Path, BinaryIO],
-    compression: Optional[Union[str, dict]] = None,
+    file: str | Path | BinaryIO,
+    compression: str | dict | None = None,
 ):
     """
     Pickles a model and saves a compressed version to the disk.
@@ -133,9 +133,7 @@ def dump_lgbm_compressed(
     dump_compressed(model, file, compression, dump)  # type: ignore
 
 
-def dumps_lgbm_compressed(
-    model: Any, compression: Optional[Union[str, dict]] = None
-) -> bytes:
+def dumps_lgbm_compressed(model: Any, compression: str | dict | None = None) -> bytes:
     """
     Pickles a model and returns the saved object as bytes.
 

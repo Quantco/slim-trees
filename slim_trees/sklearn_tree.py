@@ -24,7 +24,7 @@ except ImportError:
 
 import copyreg
 import pickle
-from typing import Any, BinaryIO, Dict
+from typing import Any, BinaryIO
 
 import numpy as np
 from numpy.typing import NDArray
@@ -60,7 +60,7 @@ def _tree_unpickle(reconstructor, args, compressed_state):
     return tree
 
 
-def _compress_tree_state(state: Dict) -> Dict:
+def _compress_tree_state(state: dict) -> dict:
     """
     Compresses a Tree state.
     :param state: dictionary with 'max_depth', 'node_count', 'nodes', 'values' as keys.
@@ -124,7 +124,7 @@ def _compress_tree_state(state: Dict) -> Dict:
     }
 
 
-def _decompress_tree_state(state: Dict) -> Dict:
+def _decompress_tree_state(state: dict) -> dict:
     """
     Decompresses a Tree state.
     :param state: 'children_left', 'children_right', 'features', 'thresholds', 'values' as keys.

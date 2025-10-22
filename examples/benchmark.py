@@ -2,8 +2,9 @@ import itertools
 import pickle
 import textwrap
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, List
+from typing import Any
 
 import lightgbm as lgb
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
@@ -181,7 +182,7 @@ def format_change(multiple: float) -> str:
     return f"{multiple:.2f} x"
 
 
-def format_benchmarks_results_table(benchmark_results: List[dict]) -> str:
+def format_benchmarks_results_table(benchmark_results: list[dict]) -> str:
     header = """
         | Model | Size | Dump Time | Load Time |
         |--|--:|--:|--:|
