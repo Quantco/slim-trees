@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 from numpy.typing import DTypeLike, NDArray
@@ -50,7 +50,7 @@ def _is_in_neighborhood_of_int(arr: NDArray, iinfo: np.iinfo, eps: float = 1e-12
 
 def compress_half_int_float_array(
     a: NDArray, compression_dtype: DTypeLike = "int8"
-) -> Dict:
+) -> dict:
     """Compress small integer and half-integer floats in a lossless fashion
 
     Idea:
@@ -77,7 +77,7 @@ def compress_half_int_float_array(
     return state
 
 
-def decompress_half_int_float_array(state: Dict) -> NDArray:
+def decompress_half_int_float_array(state: dict) -> NDArray:
     n_thresholds = len(state["a2_compressible"]) + len(state["a_incompressible"])
     is_compressible = np.unpackbits(
         state["is_compressible"], count=n_thresholds

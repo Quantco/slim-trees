@@ -1,8 +1,9 @@
 import os
 import tempfile
 import time
+from collections.abc import Callable
 from itertools import product
-from typing import Any, Callable, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -14,7 +15,7 @@ from slim_trees.pickling import dump_compressed, load_compressed
 
 def generate_dataset(
     n_samples: int = 50000, n_features: int = 100
-) -> Tuple[pd.DataFrame, pd.Series]:
+) -> tuple[pd.DataFrame, pd.Series]:
     """Generate a dataset with 50000 samples and 100 features.
 
     Returns:
@@ -45,7 +46,7 @@ def generate_dataset(
 
 def generate_dataset_train_test(
     n_samples: int = 50000, n_features: int = 100
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Generate a dataset with 50000 samples and 100 features.
 
     Returns:
@@ -77,7 +78,7 @@ def evaluate_compression_performance(
             {
                 "compression": compression,
                 "dump_function": dump_function.__name__ if dump_function else None,
-                "size": f"{size / 2 ** 20:.2f} MB",
+                "size": f"{size / 2**20:.2f} MB",
                 "dump_time": f"{dump_time:.3f} s",
                 "load_time": f"{load_time:.3f} s",
             }

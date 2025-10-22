@@ -1,6 +1,5 @@
 import pathlib
 import tempfile
-from typing import Union
 
 import lightgbm as lgb
 from lightgbm import Booster
@@ -26,7 +25,7 @@ def load_model(path) -> Booster:
     return Booster(model_file=path)
 
 
-def dump_model_string(booster: Booster, path: Union[str, pathlib.Path]):
+def dump_model_string(booster: Booster, path: str | pathlib.Path):
     with open(path, "w") as f:
         f.write(booster.model_to_string())
 

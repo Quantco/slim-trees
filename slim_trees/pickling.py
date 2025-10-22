@@ -5,7 +5,7 @@ import lzma
 import pathlib
 import pickle
 from collections.abc import Callable
-from typing import Any, BinaryIO, Dict, Optional, Tuple, Union, overload
+from typing import Any, BinaryIO, overload
 
 
 class _NoCompression:
@@ -18,7 +18,7 @@ class _NoCompression:
         return data
 
 
-def _get_compression_from_path(path: Union[str, pathlib.Path]) -> str:
+def _get_compression_from_path(path: str | pathlib.Path) -> str:
     compressions = {
         ".gz": "gzip",
         ".lzma": "lzma",
@@ -43,16 +43,16 @@ def _get_compression_library(compression_method: str) -> Any:
     return compression_library[compression_method]
 
 
-def _get_default_kwargs(compression_method: str) -> Dict[str, Any]:
+def _get_default_kwargs(compression_method: str) -> dict[str, Any]:
     defaults = {"gzip": {"compresslevel": 1}}
-    fallback: Dict[str, Any] = {}  # else mypy complains
+    fallback: dict[str, Any] = {}  # else mypy complains
     return defaults.get(compression_method, fallback)
 
 
 def _unpack_compression_args(
-    compression: Optional[Union[str, Dict[str, Any]]] = None,
-    file: Optional[Union[str, pathlib.Path, BinaryIO]] = None,
-) -> Tuple[str, dict]:
+    compression: str | dict[str, Any] | None = None,
+    file: str | pathlib.Path | BinaryIO | None = None,
+) -> tuple[str, dict]:
     if compression is not None:
         if isinstance(compression, str):
             return compression, _get_default_kwargs(compression)
@@ -72,25 +72,25 @@ def _unpack_compression_args(
 def dump_compressed(
     obj: Any,
     file: BinaryIO,
-    compression: Union[str, dict],
-    dump_function: Optional[Callable] = None,
+    compression: str | dict,
+    dump_function: Callable | None = None,
 ): ...
 
 
 @overload
 def dump_compressed(
     obj: Any,
-    file: Union[str, pathlib.Path],
-    compression: Optional[Union[str, dict]] = None,
-    dump_function: Optional[Callable] = None,
+    file: str | pathlib.Path,
+    compression: str | dict | None = None,
+    dump_function: Callable | None = None,
 ): ...
 
 
 def dump_compressed(
     obj: Any,
-    file: Union[str, pathlib.Path, BinaryIO],
-    compression: Optional[Union[str, dict]] = None,
-    dump_function: Optional[Callable] = None,
+    file: str | pathlib.Path | BinaryIO,
+    compression: str | dict | None = None,
+    dump_function: Callable | None = None,
 ):
     """
     Pickles a model and saves it to the disk. If compression is not specified,
@@ -116,8 +116,8 @@ def dump_compressed(
 
 def dumps_compressed(
     obj: Any,
-    compression: Optional[Union[str, dict]] = None,
-    dump_function: Optional[Callable] = None,
+    compression: str | dict | None = None,
+    dump_function: Callable | None = None,
 ) -> bytes:
     """
     Pickles a model and returns the pickled bytes. If compression is not specified, it won't use
@@ -144,22 +144,22 @@ def dumps_compressed(
 @overload
 def load_compressed(
     file: BinaryIO,
-    compression: Union[str, dict],
+    compression: str | dict,
     unpickler_class: type = pickle.Unpickler,
 ): ...
 
 
 @overload
 def load_compressed(
-    file: Union[str, pathlib.Path],
-    compression: Optional[Union[str, dict]] = None,
+    file: str | pathlib.Path,
+    compression: str | dict | None = None,
     unpickler_class: type = pickle.Unpickler,
 ): ...
 
 
 def load_compressed(
-    file: Union[str, pathlib.Path, BinaryIO],
-    compression: Optional[Union[str, dict]] = None,
+    file: str | pathlib.Path | BinaryIO,
+    compression: str | dict | None = None,
     unpickler_class: type = pickle.Unpickler,
 ) -> Any:
     """
@@ -182,7 +182,7 @@ def load_compressed(
 
 def loads_compressed(
     data: bytes,
-    compression: Optional[Union[str, dict]] = None,
+    compression: str | dict | None = None,
     unpickler_class: type = pickle.Unpickler,
 ) -> Any:
     """
@@ -206,8 +206,8 @@ def loads_compressed(
 
 def get_pickled_size(
     obj: Any,
-    compression: Union[str, dict] = "lzma",
-    dump_function: Optional[Callable] = None,
+    compression: str | dict = "lzma",
+    dump_function: Callable | None = None,
 ) -> int:
     """
     Returns the size that an object would take on disk if pickled.

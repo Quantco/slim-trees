@@ -4,7 +4,7 @@ import os
 import pickle
 import re
 import sys
-from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
+from typing import Any, BinaryIO
 
 import numpy as np
 from numpy.typing import DTypeLike, NDArray
@@ -101,7 +101,7 @@ RIGHT_CHILD_DTYPE = LEFT_CHILD_DTYPE
 LEAF_VALUE_DTYPE = np.float64
 
 
-def _extract_feature(feature_line: str) -> Tuple[str, List[str]]:
+def _extract_feature(feature_line: str) -> tuple[str, list[str]]:
     feat_name, values_str = feature_line.split("=")
     return feat_name, values_str.split(" ")
 
@@ -126,7 +126,7 @@ def _validate_feature_lengths(feats_map: dict):
     assert len(feats_map["leaf_value"]) == num_leaves
 
 
-def parse(str_list: Union[List[str], List[Optional[str]]], dtype: DTypeLike):
+def parse(str_list: list[str] | list[str | None], dtype: DTypeLike):
     if np.can_cast(dtype, np.int64):
         int64_array: NDArray = np.array(str_list, dtype=np.int64)
         return safe_cast(int64_array, dtype)
@@ -134,7 +134,7 @@ def parse(str_list: Union[List[str], List[Optional[str]]], dtype: DTypeLike):
     return np.array(str_list, dtype=dtype)
 
 
-def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
+def _compress_booster_handle(model_string: str) -> tuple[str, list[dict], str]:
     if not model_string.startswith(f"tree\nversion=v{lightgbm_version.major}"):
         raise ValueError(
             f"Only v{lightgbm_version.major} is supported for the booster string format."
@@ -153,15 +153,15 @@ def _compress_booster_handle(model_string: str) -> Tuple[str, List[dict], str]:
         raise ValueError("Could not find back string.")
     back_str = back_str_match.group()
     tree_matches = re.findall(TREE_GROUP_REGEX, model_string)
-    trees: List[dict] = []
+    trees: list[dict] = []
     for i, tree_match in enumerate(tree_matches):
         tree_name, features_list = tree_match
         _, tree_idx = tree_name.replace("\n", "").split("=")
         assert int(tree_idx) == i
 
         # extract features -- filter out empty ones
-        features: List[str] = [f for f in features_list.split("\n") if "=" in f]
-        feats_map: Dict[str, List[str]] = dict(_extract_feature(fl) for fl in features)
+        features: list[str] = [f for f in features_list.split("\n") if "=" in f]
+        feats_map: dict[str, list[str]] = dict(_extract_feature(fl) for fl in features)
         _validate_feature_lengths(feats_map)
 
         tree_values = {
@@ -219,7 +219,7 @@ def _validate_tree_structure(tree: dict):
         )
 
 
-def _decompress_booster_handle(compressed_state: Tuple[str, List[dict], str]) -> str:
+def _decompress_booster_handle(compressed_state: tuple[str, list[dict], str]) -> str:
     front_str, trees, back_str = compressed_state
     assert isinstance(front_str, str)
     assert isinstance(trees, list)
