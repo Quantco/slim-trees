@@ -22,18 +22,16 @@ jobs:
           - skl13
           - skl14
           - skl15
-          - lgbm32
           - lgbm33
           - lgbm40
           - lgbm41
           - lgbm42
           - lgbm43
           - lgbm46
-          - py38
-          - py39
           - py310
           - py311
           - py312
+          - py313
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up pixi
