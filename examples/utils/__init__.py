@@ -77,7 +77,7 @@ def evaluate_compression_performance(
             {
                 "compression": compression,
                 "dump_function": dump_function.__name__ if dump_function else None,
-                "size": f"{size / 2 ** 20:.2f} MB",
+                "size": f"{size / 2**20:.2f} MB",
                 "dump_time": f"{dump_time:.3f} s",
                 "load_time": f"{load_time:.3f} s",
             }

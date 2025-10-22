@@ -1,4 +1,4 @@
-[project] # TODO: move to pyproject.toml once pixi supports it
+[workspace]
 name = "slim-trees"
 description = "A python package for efficient pickling of ML models."
 channels = ["conda-forge"]
